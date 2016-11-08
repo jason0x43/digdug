@@ -5,7 +5,7 @@ define({
 	maxConcurrency: 3,
 	loaderOptions: {
 		packages: [
-			{ name: 'digdug', location: '.' }
+			{ name: 'digdug', location: './dist' }
 		]
 	},
 	reporters: [ 'Console' ],
