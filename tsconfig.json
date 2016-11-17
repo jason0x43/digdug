@@ -12,11 +12,16 @@
 		"outDir": "./dist",
 		"target": "ES5"
 	},
+	"paths": {
+		"digdug/*": [
+			"./src/*"
+		]
+	},
 	"files": [
-		"./types/dojo2/dojo.d.ts"
+		"./node_modules/intern/typings/node/node.d.ts",
+		"./node_modules/intern/typings/intern/intern.d.ts"
 	],
 	"include": [
-		"./types/**/*.ts",
 		"./src/**/*.ts",
 		"./tests/**/*.ts"
 	]

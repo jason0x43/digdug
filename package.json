@@ -8,16 +8,20 @@
   },
   "license": "BSD-3-Clause",
   "dependencies": {
-    "dojo": "2.0.0-alpha.7",
     "decompress": "3.0.0",
+    "dojo": "2.0.0-alpha.7",
     "mkdirp": "^0.5.1"
   },
   "devDependencies": {
     "@types/mkdirp": "^0.3.29",
-    "intern": "3.0.6"
+    "@types/sinon": "^1.16.32",
+    "dojo-loader": "^2.0.0-beta.7",
+    "intern": "3.0.6",
+    "sinon": "^1.17.6"
   },
   "scripts": {
-    "test": "./node_modules/.bin/intern-client config=tests/intern"
+    "build": "tsc",
+    "test": "./node_modules/.bin/intern-client config=dist/tests/intern"
   },
   "bugs": "https://github.com/theintern/digdug/issues",
   "keywords": [
