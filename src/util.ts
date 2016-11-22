@@ -33,7 +33,7 @@ export function mixin(target: Object, ... sources: Object[]): Object {
  * @param {Function} listener The event listener that will be invoked when the event occurs.
  * @returns {{ remove: Function }} A remove handle.
  */
-export function on(emitter: EventEmitter, event: string, listener: EventListener): IHandle {
+export function on(emitter: EventEmitter, event: string, listener: EventListener | Function): IHandle {
 	emitter.on(event, listener);
 
 	return {

@@ -8,16 +8,22 @@
   },
   "license": "BSD-3-Clause",
   "dependencies": {
-    "decompress": "3.0.0",
-    "dojo": "2.0.0-alpha.7",
-    "mkdirp": "^0.5.1"
+    "decompress": "4.0.0",
+    "dojo": "^2.0.0-alpha.7",
+    "mkdirp": "^0.5.1",
   },
   "devDependencies": {
+    "@types/chai": "^3.4.34",
+    "@types/es6-promise": "0.0.32",
     "@types/mkdirp": "^0.3.29",
+    "@types/node": "^6.0.48",
     "@types/sinon": "^1.16.32",
     "dojo-loader": "^2.0.0-beta.7",
-    "intern": "3.0.6",
-    "sinon": "^1.17.6"
+    "grunt": "^1.0.1",
+    "grunt-dojo2": "^2.0.0-beta.19",
+    "intern": "3.4.1",
+    "sinon": "^1.17.6",
+    "typescript": "^2.0.10"
   },
   "scripts": {
     "build": "tsc",
