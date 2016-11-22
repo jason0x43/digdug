@@ -5,6 +5,8 @@
 		"declaration": true,
 		"noImplicitAny": true,
 		"noImplicitThis": true,
+		"noUnusedParameters": true,
+		"noUnusedLocals": true,
 		"removeComments": true,
 		"preserveConstEnums": true,
 		"allowSyntheticDefaultImports": true,

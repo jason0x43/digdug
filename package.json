@@ -10,7 +10,7 @@
   "dependencies": {
     "decompress": "4.0.0",
     "dojo": "^2.0.0-alpha.7",
-    "mkdirp": "^0.5.1",
+    "mkdirp": "^0.5.1"
   },
   "devDependencies": {
     "@types/chai": "^3.4.34",
@@ -23,6 +23,7 @@
     "grunt-dojo2": "^2.0.0-beta.19",
     "intern": "3.4.1",
     "sinon": "^1.17.6",
+    "tslint": "^4.0.1",
     "typescript": "^2.0.10"
   },
   "scripts": {
