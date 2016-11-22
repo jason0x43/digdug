@@ -11,9 +11,9 @@ import { IResponse } from 'dojo/request';
 import { DownloadOptions } from './Tunnel';
 import { Url, parse as parseUrl } from 'url';
 import JobState = digdug.JobState;
-var request = require('dojo/request');
-import DojoPromise = require('dojo/Promise');
+import request = require('dojo/request');
 import {ChildDescriptor} from './Tunnel';
+import { INodeRequestOptions } from 'dojo/request/node';
 
 export interface BrowserStackEnvironment {
 	browser: string;
@@ -156,7 +156,7 @@ export default class BrowserStackTunnel extends Tunnel {
 			});
 	}
 
-	protected _makeArgs (... values: string[]): string[] {
+	protected _makeArgs (): string[] {
 		const args: string[] = [
 			this.accessKey,
 			String(this.servers.map(function (server) {
@@ -187,29 +187,28 @@ export default class BrowserStackTunnel extends Tunnel {
 		return args;
 	}
 
-	sendJobState(jobId: string, data: JobState) {
+	sendJobState(jobId: string, data: JobState): Promise<void> {
 		const payload = JSON.stringify({
 			status: data.status || data.success ? 'completed' : 'error'
 		});
 
-		return request.put(`https://www.browserstack.com/automate/sessions/${jobId }.json`, {
+		const options: INodeRequestOptions = {
 			data: payload,
-			handleAs: 'text',
 			headers: {
-				'Content-Length': Buffer.byteLength(payload, 'utf8'),
+				'Content-Length': String(Buffer.byteLength(payload, 'utf8')),
 				'Content-Type': 'application/json'
 			},
 			password: this.accessKey,
 			user: this.username,
 			proxy: this.proxy
-		}).then(function (response: IResponse) {
-			if (response.statusCode >= 200 && response.statusCode < 300) {
-				return true;
-			}
-			else {
-				throw new Error(response.data || 'Server reported ' + response.statusCode + ' with no other data.');
-			}
-		});
+		};
+
+		return request.put(`https://www.browserstack.com/automate/sessions/${jobId }.json`, options)
+			.then(function (response: IResponse) {
+				if (response.statusCode < 200 || response.statusCode >= 300) {
+					throw new Error(response.data || `Server reported ${ response.statusCode } with no other data.`);
+				}
+			});
 	}
 
 	protected _start(): ChildDescriptor {

@@ -3,7 +3,6 @@
  */
 
 import decompress = require('decompress');
-import Handle = digdug.Handle;
 import Evented = require('dojo/Evented');
 import { mixin, on } from './util';
 import { format as formatUrl } from 'url';
@@ -13,11 +12,11 @@ import DojoPromise = require('dojo/Promise');
 import * as sendRequest from 'dojo/request/node';
 import { IRequestError } from 'dojo/request';
 import { spawn } from 'child_process';
-import JobState = digdug.JobState;
 import { Deferred } from 'dojo/Promise';
 import { ChildProcess } from 'child_process';
 import { Url } from 'url';
 import { IResponse } from 'dojo/request';
+import { Handle, JobState } from './interfaces';
 
 // TODO: Spawned processes are not getting cleaned up if there is a crash
 
@@ -47,7 +46,7 @@ function clearHandles(handles: Handle[]): void {
 function proxyEvent(target: Evented, type: string) {
 	return function (data: any) {
 		target.emit(type, data);
-	}
+	};
 }
 
 export interface TunnelOptions {
@@ -329,7 +328,8 @@ export default class Tunnel extends Evented implements Url, DownloadOptions {
 	 * @protected
 	 * @returns {string[]} A list of command-line arguments.
 	 */
-	protected _makeArgs(... values: string[]): string[] {
+	protected _makeArgs(... values: string[]): string[];
+	protected _makeArgs(): string[] {
 		return [];
 	}
 
@@ -348,7 +348,7 @@ export default class Tunnel extends Evented implements Url, DownloadOptions {
 	protected _makeChild(... values: string[]): ChildDescriptor {
 		function handleChildExit() {
 			if (dfd.promise.state === DojoPromise.State.PENDING) {
-				var message = 'Tunnel failed to start: ' + (errorMessage || ('Exit code: ' + exitCode));
+				const message = 'Tunnel failed to start: ' + (errorMessage || ('Exit code: ' + exitCode));
 				dfd.reject(new Error(message));
 			}
 		}
@@ -359,7 +359,7 @@ export default class Tunnel extends Evented implements Url, DownloadOptions {
 
 		const dfd = new DojoPromise.Deferred(function (reason) {
 			child.kill('SIGINT');
-			return new Promise(function (resolve, reject) {
+			return new Promise(function (_unused, reject) {
 				child.once('exit', function () {
 					reject(reason);
 				});
@@ -418,7 +418,8 @@ export default class Tunnel extends Evented implements Url, DownloadOptions {
 	 * @protected
 	 * @returns {Object} A set of options matching those provided to Node.js {@link module:child_process.spawn}.
 	 */
-	protected _makeOptions(... values: string[]): SpawnOptions {
+	protected _makeOptions(... values: string[]): SpawnOptions;
+	protected _makeOptions(): SpawnOptions {
 		return {
 			cwd: this.directory,
 			env: process.env
@@ -432,10 +433,9 @@ export default class Tunnel extends Evented implements Url, DownloadOptions {
 	 * @param {JobState} data Data to send to the tunnel provider about the job.
 	 * @returns {Promise.<void>} A promise that resolves once the job state request is complete.
 	 */
-	sendJobState(jobId: string, data: JobState): Promise<void> {
-		var dfd = new DojoPromise.Deferred<void>();
-		dfd.reject(new Error('Job state is not supported by this tunnel.'));
-		return dfd.promise;
+	sendJobState(jobId: string, data: JobState): Promise<void>;
+	sendJobState(): Promise<void> {
+		return Promise.reject(new Error('Job state is not supported by this tunnel.'));
 	}
 
 	/**
@@ -455,7 +455,7 @@ export default class Tunnel extends Evented implements Url, DownloadOptions {
 		}
 
 		this.isStarting = true;
-	
+
 		this._startTask = this
 			.download()
 			.then(null, null, (progress) => {
@@ -466,8 +466,7 @@ export default class Tunnel extends Evented implements Url, DownloadOptions {
 				return this._start();
 			})
 			.then((child) => {
-				var childProcess = child.process;
-				this._process = childProcess;
+				const childProcess = this._process = child.process;
 				this._handles.push(
 					on(childProcess.stdout, 'data', proxyEvent(this, 'stdout')),
 					on(childProcess.stderr, 'data', proxyEvent(this, 'stderr')),
@@ -511,7 +510,7 @@ export default class Tunnel extends Evented implements Url, DownloadOptions {
 			clearHandles(handles);
 			dfd.resolve();
 		}
-	
+
 		const childHandle = this._makeChild();
 		const child = childHandle.process;
 		const dfd = childHandle.deferred;
@@ -523,7 +522,7 @@ export default class Tunnel extends Evented implements Url, DownloadOptions {
 				dfd.reject(<any> error);
 			})
 		];
-	
+
 		return childHandle;
 	}
 
@@ -544,10 +543,10 @@ export default class Tunnel extends Evented implements Url, DownloadOptions {
 		else if (!this.isRunning) {
 			throw new Error('Tunnel is not running');
 		}
-	
+
 		this.isRunning = false;
 		this.isStopping = true;
-	
+
 		return this._stop().then((returnValue: number) => {
 			clearHandles(this._handles);
 			this._process = this._handles = null;

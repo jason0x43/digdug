@@ -1,5 +1,5 @@
-import { IHandle } from 'dojo/interfaces';
 import EventEmitter = NodeJS.EventEmitter;
+import { Handle } from './interfaces';
 
 /**
  * Adds properties from source objects to a target object using ES5 `Object.defineProperty` instead of
@@ -33,11 +33,11 @@ export function mixin(target: Object, ... sources: Object[]): Object {
  * @param {Function} listener The event listener that will be invoked when the event occurs.
  * @returns {{ remove: Function }} A remove handle.
  */
-export function on(emitter: EventEmitter, event: string, listener: EventListener | Function): IHandle {
+export function on(emitter: EventEmitter, event: string, listener: EventListener | Function): Handle {
 	emitter.on(event, listener);
 
 	return {
-		remove(this: IHandle) {
+		remove(this: Handle) {
 			this.remove = function () { };
 			emitter.removeListener(event, listener);
 		}

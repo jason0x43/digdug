@@ -2,17 +2,9 @@
  * @module digdug/NullTunnel
  */
 
-
 import Tunnel from './Tunnel';
-import {TunnelOptions} from './Tunnel';
 import DojoPromise = require('dojo/Promise');
 import { mixin } from './util';
-
-interface Options extends TunnelOptions {
-	auth: string;
-	isDownloaded: boolean;
-}
-
 
 /**
  * A no-op tunnel.

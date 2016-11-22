@@ -3,7 +3,6 @@ import * as assert from 'intern/chai!assert';
 import * as sinon from 'sinon';
 import { mixin, on } from 'digdug/util';
 import { EventEmitter } from 'events';
-import {emit} from 'cluster';
 
 registerSuite({
 	mixin: {
