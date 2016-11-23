@@ -2,31 +2,33 @@
  * @module digdug/TestingBotTunnel
  */
 
-var fs = require('fs');
-var ioQuery = require('dojo/io-query');
-var os = require('os');
-var pathUtil = require('path');
-var request = require('dojo/request');
-var Tunnel = require('./Tunnel');
-var urlUtil = require('url');
-var util = require('./util');
+import Tunnel from './Tunnel';
+import { mixin, on } from './util';
+import { join as joinPath } from 'path';
+import { parse as parseUrl } from 'url';
+import {INodeRequestOptions} from 'dojo/request/node';
+import { tmpdir } from 'os';
+import { watchFile, unwatchFile, existsSync } from 'fs';
+import {NormalizedEnvironment} from './Tunnel';
+import {TunnelOptions} from './Tunnel';
+import {JobState} from './interfaces';
+import ioQuery = require('dojo/io-query');
+import request = require('dojo/request');
+import {ChildDescriptor} from './Tunnel';
 
-/**
- * A TestingBot tunnel.
- *
- * @constructor module:digdug/TestingBotTunnel
- * @extends module:digdug/Tunnel
- */
-function TestingBotTunnel() {
-	this.apiKey = process.env.TESTINGBOT_KEY;
-	this.apiSecret = process.env.TESTINGBOT_SECRET;
-	this.fastFailDomains = [];
-	Tunnel.apply(this, arguments);
+export interface TestingBotEnvironment {
+	selenium_name: string;
+	name: string;
+	platform: string;
+	version: string;
 }
 
-var _super = Tunnel.prototype;
-TestingBotTunnel.prototype = util.mixin(Object.create(_super), /** @lends module:digdug/TestingBotTunnel# */ {
-	constructor: TestingBotTunnel,
+export default class TestingBotTunnel extends Tunnel {
+	constructor(kwArgs: TunnelOptions) {
+		super(mixin({
+			fastFailDomains: []
+		}, kwArgs));
+	}
 
 	/**
 	 * The TestingBot API key.
@@ -34,7 +36,7 @@ TestingBotTunnel.prototype = util.mixin(Object.create(_super), /** @lends module
 	 * @type {string}
 	 * @default the value of the TESTINGBOT_API_KEY environment variable
 	 */
-	apiKey: null,
+	apiKey: string;
 
 	/**
 	 * The TestingBot API secret.
@@ -42,11 +44,7 @@ TestingBotTunnel.prototype = util.mixin(Object.create(_super), /** @lends module
 	 * @type {string}
 	 * @default the value of the TESTINGBOT_API_SECRET environment variable
 	 */
-	apiSecret: null,
-
-	directory: pathUtil.join(__dirname, 'testingbot'),
-
-	executable: 'java',
+	apiSecret: string;
 
 	/**
 	 * A list of regular expressions corresponding to domains whose connections should fail immediately if the VM
@@ -54,18 +52,14 @@ TestingBotTunnel.prototype = util.mixin(Object.create(_super), /** @lends module
 	 *
 	 * @type {string[]}
 	 */
-	fastFailDomains: null,
+	fastFailDomains: string[];
 
 	/**
 	 * A filename where additional logs from the tunnel should be output.
 	 *
 	 * @type {string}
 	 */
-	logFile: null,
-
-	port: 4445,
-
-	url: 'https://testingbot.com/downloads/testingbot-tunnel.zip',
+	logFile: string;
 
 	/**
 	 * Whether or not to use rabbIT compression for the tunnel connection.
@@ -73,7 +67,7 @@ TestingBotTunnel.prototype = util.mixin(Object.create(_super), /** @lends module
 	 * @type {boolean}
 	 * @default
 	 */
-	useCompression: false,
+	useCompression: boolean;
 
 	/**
 	 * Whether or not to use the default local Jetty proxy for the tunnel.
@@ -81,7 +75,7 @@ TestingBotTunnel.prototype = util.mixin(Object.create(_super), /** @lends module
 	 * @type {boolean}
 	 * @default
 	 */
-	useJettyProxy: true,
+	useJettyProxy: boolean;
 
 	/**
 	 * Whether or not to use the default remote Squid proxy for the VM.
@@ -89,7 +83,7 @@ TestingBotTunnel.prototype = util.mixin(Object.create(_super), /** @lends module
 	 * @type {boolean}
 	 * @default
 	 */
-	useSquidProxy: true,
+	useSquidProxy: boolean;
 
 	/**
 	 * Whether or not to re-encrypt data encrypted by self-signed certificates.
@@ -97,23 +91,23 @@ TestingBotTunnel.prototype = util.mixin(Object.create(_super), /** @lends module
 	 * @type {boolean}
 	 * @default
 	 */
-	useSsl: false,
+	useSsl: boolean;
 
 	/**
 	 * The URL of a service that provides a list of environments supported by TestingBot.
 	 */
-	environmentUrl: 'https://api.testingbot.com/v1/browsers',
+	environmentUrl: string;
 
 	get auth() {
-		return `${this.apiKey}:${this.apiSecret}`;
-	},
+		return `${ this.apiKey }:${ this.apiSecret }`;
+	}
 
 	get isDownloaded() {
-		return fs.existsSync(pathUtil.join(this.directory, 'testingbot-tunnel/testingbot-tunnel.jar'));
-	},
+		return existsSync(joinPath(this.directory, 'testingbot-tunnel/testingbot-tunnel.jar'));
+	}
 
-	_makeArgs: function (readyFile) {
-		var args = [
+	_makeArgs(readyFile: string): string[] {
+		const args = [
 			'-jar', 'testingbot-tunnel/testingbot-tunnel.jar',
 			this.apiKey,
 			this.apiSecret,
@@ -130,17 +124,20 @@ TestingBotTunnel.prototype = util.mixin(Object.create(_super), /** @lends module
 		this.verbose && args.push('-d');
 
 		if (this.proxy) {
-			var proxy = urlUtil.parse(this.proxy);
+			const proxy = parseUrl(this.proxy);
 
 			proxy.hostname && args.unshift('-Dhttp.proxyHost=', proxy.hostname);
 			proxy.port && args.unshift('-Dhttp.proxyPort=', proxy.port);
 		}
 
 		return args;
-	},
+	}
 
-	sendJobState: function (jobId, data) {
-		var payload = {};
+	sendJobState(jobId: string, data: JobState): Promise<void> {
+		const payload: {
+			groups?: any;
+			[ key: string ]: any;
+		} = {};
 
 		data.success != null && (payload['test[success]'] = data.success ? 1 : 0);
 		data.status && (payload['test[status_message]'] = data.status);
@@ -148,21 +145,21 @@ TestingBotTunnel.prototype = util.mixin(Object.create(_super), /** @lends module
 		data.extra && (payload['test[extra]'] = JSON.stringify(data.extra));
 		data.tags && data.tags.length && (payload.groups = data.tags.join(','));
 
-		payload = ioQuery.objectToQuery(payload);
-
-		return request.put(`https://api.testingbot.com/v1/tests/${jobId}`, {
-			data: payload,
-			handleAs: 'text',
+		const payloadStr = ioQuery.objectToQuery(payload);
+		const options: INodeRequestOptions = {
+			data: payloadStr,
 			headers: {
-				'Content-Length': Buffer.byteLength(payload, 'utf8'),
+				'Content-Length': String(Buffer.byteLength(payloadStr, 'utf8')),
 				'Content-Type': 'application/x-www-form-urlencoded'
 			},
 			password: this.apiSecret,
 			user: this.apiKey,
 			proxy: this.proxy
-		}).then(function (response) {
+		};
+
+		return request.put(`https://api.testingbot.com/v1/tests/${jobId}`, options).then(function (response) {
 			if (response.data) {
-				var data = JSON.parse(response.data);
+				const data = JSON.parse(response.data);
 
 				if (data.error) {
 					throw new Error(data.error);
@@ -178,31 +175,29 @@ TestingBotTunnel.prototype = util.mixin(Object.create(_super), /** @lends module
 				throw new Error(`Server reported ${response.statusCode} with no other data.`);
 			}
 		});
-	},
+	}
 
-	_start: function () {
-		var readyFile = pathUtil.join(os.tmpdir(), `testingbot-${Date.now()}`);
-		var child = this._makeChild(readyFile);
-		var childProcess = child.process;
-		var dfd = child.deferred;
+	_start(): ChildDescriptor {
+		const readyFile = joinPath(tmpdir(), `testingbot-${ Date.now() }`);
+		const child = this._makeChild(readyFile);
+		const { process: childProcess, deferred: dfd } = child;
+		let lastMessage: string;
 
 		// Polling API is used because we are only watching for one file, so efficiency is not a big deal, and the
 		// `fs.watch` API has extra restrictions which are best avoided
-		fs.watchFile(readyFile, { persistent: false, interval: 1007 }, function (current, previous) {
+		watchFile(readyFile, { persistent: false, interval: 1007 }, function (current, previous) {
 			if (Number(current.mtime) === Number(previous.mtime)) {
 				// readyFile hasn't been modified, so ignore the event
 				return;
 			}
 
-			fs.unwatchFile(readyFile);
+			unwatchFile(readyFile);
 			dfd.resolve();
 		});
 
-		var self = this;
-		var lastMessage;
 		this._handles.push(
-			util.on(childProcess.stderr, 'data', function (data) {
-				data.split('\n').forEach(function (message) {
+			on(childProcess.stderr, 'data', (data: string | Buffer) => {
+				String(data).split('\n').forEach((message) => {
 					if (message.indexOf('INFO: ') === 0) {
 						message = message.slice('INFO: '.length);
 						// the tunnel produces a lot of repeating messages during setup when the status is pending;
@@ -212,7 +207,7 @@ TestingBotTunnel.prototype = util.mixin(Object.create(_super), /** @lends module
 							message.indexOf('>> [') === -1 &&
 							message.indexOf('<< [') === -1
 						) {
-							self.emit('status', message);
+							this.emit('status', message);
 							lastMessage = message;
 						}
 					}
@@ -221,7 +216,7 @@ TestingBotTunnel.prototype = util.mixin(Object.create(_super), /** @lends module
 		);
 
 		return child;
-	},
+	}
 
 	/**
 	 * Attempt to normalize a TestingBot described environment with the standard Selenium capabilities
@@ -239,19 +234,33 @@ TestingBotTunnel.prototype = util.mixin(Object.create(_super), /** @lends module
 	 * @returns a normalized descriptor
 	 * @private
 	 */
-	_normalizeEnvironment: function (environment) {
-		var browserMap = {
+	_normalizeEnvironment(environment: TestingBotEnvironment): NormalizedEnvironment {
+		const browserMap: { [ key: string ]: string } = {
 			googlechrome: 'chrome',
 			iexplore: 'internet explorer'
 		};
 
 		return {
-			platform: environment.platform,
 			browserName: browserMap[environment.name] || environment.name,
-			version: environment.version,
-			descriptor: environment
+			descriptor: environment,
+			platform: environment.platform,
+			version: environment.version
 		};
 	}
-});
+}
 
-module.exports = TestingBotTunnel;
+mixin(TestingBotTunnel.prototype, {
+	apiKey: process.env.TESTINGBOT_KEY,
+	apiSecret: process.env.TESTINGBOT_SECRET,
+	directory: joinPath(__dirname, 'testingbot'),
+	executable: 'java',
+	fastFailDomains: null,
+	logFile: null,
+	port: '4445',
+	url: 'https://testingbot.com/downloads/testingbot-tunnel.zip',
+	useCompression: false,
+	useJettyProxy: true,
+	useSquidProxy: true,
+	useSsl: false,
+	environmentUrl: 'https://api.testingbot.com/v1/browsers'
+});

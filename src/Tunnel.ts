@@ -72,11 +72,11 @@ export interface ChildDescriptor {
 
 export interface NormalizedEnvironment {
 	browserName: string;
-	browserVersion: string;
+	browserVersion?: string;
 	descriptor: Object;
 	platform: string;
-	platformName: string;
-	platformVersion: string;
+	platformName?: string;
+	platformVersion?: string;
 	version: string;
 }
 
