@@ -43,6 +43,10 @@ export interface JobState {
 	visibility?: string;
 }
 
+export interface KwArgs {
+	[ key: string ]: any;
+}
+
 export interface Listener<EventType> {
 	(event: EventType): void;
 }

@@ -2,13 +2,13 @@
  * @module digdug/Tunnel
  */
 
+import DojoPromise = require('dojo/Promise');
 import decompress = require('decompress');
 import Evented = require('dojo/Evented');
 import { mixin, on } from './util';
 import { format as formatUrl } from 'url';
 import { existsSync } from 'fs';
 import { join as joinPath } from 'path';
-import DojoPromise = require('dojo/Promise');
 import * as sendRequest from 'dojo/request/node';
 import { IRequestError } from 'dojo/request';
 import { spawn } from 'child_process';
@@ -505,7 +505,7 @@ export default class Tunnel extends Evented implements Url, DownloadOptions {
 	 * An object containing a reference to the child process, and a Deferred that is resolved once the tunnel is
 	 * ready for use. Normally this will be the object returned from a call to `Tunnel#_makeChild`.
 	 */
-	protected _start() {
+	protected _start(): ChildDescriptor {
 		function resolve() {
 			clearHandles(handles);
 			dfd.resolve();
