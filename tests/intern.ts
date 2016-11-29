@@ -20,8 +20,8 @@ export const loaders = {
 export const reporters = [ 'Console' ];
 
 export const suites = [
-	'dojo/has!host-node?tests/unit/all'
-	// 'dojo/has!host-node?./tests/integration/all'
+	'dojo/has!host-node?tests/unit/all',
+	'dojo/has!host-node?./tests/integration/all'
 ];
 
 export const functionalSuites: string[] = [];
