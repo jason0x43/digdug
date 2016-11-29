@@ -24,7 +24,7 @@ export interface TestingBotEnvironment {
 }
 
 export default class TestingBotTunnel extends Tunnel {
-	constructor(kwArgs: TunnelOptions) {
+	constructor(kwArgs?: TunnelOptions) {
 		super(mixin({
 			fastFailDomains: []
 		}, kwArgs));

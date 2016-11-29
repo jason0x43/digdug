@@ -30,7 +30,7 @@ export interface BrowserStackEnvironment {
  * @extends module:digdug/Tunnel
  */
 export default class BrowserStackTunnel extends Tunnel {
-	constructor(kwArgs: TunnelOptions) {
+	constructor(kwArgs?: TunnelOptions) {
 		super(mixin({
 			servers: []
 		}, kwArgs));

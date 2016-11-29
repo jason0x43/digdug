@@ -29,7 +29,7 @@ export interface SauceLabsEnvironment {
  * @extends module:digdug/Tunnel
  */
 export default class SauceLabsTunnel extends Tunnel {
-	constructor(kwArgs: TunnelOptions) {
+	constructor(kwArgs?: TunnelOptions) {
 		super(mixin({
 			directDomains: [],
 			tunnelDomains: [],

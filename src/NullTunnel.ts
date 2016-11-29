@@ -12,7 +12,7 @@ import { mixin } from './util';
  * @constructor module:digdug/NullTunnel
  * @extends module:digdug/Tunnel
  */
-class NullTunnel extends Tunnel {
+export default class NullTunnel extends Tunnel {
 	download() {
 		return DojoPromise.resolve(null);
 	}
@@ -39,5 +39,3 @@ mixin(NullTunnel.prototype, {
 	auth: '',
 	isDownloaded: true
 });
-
-export = NullTunnel;

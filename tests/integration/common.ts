@@ -6,7 +6,7 @@ import Test = require('intern/lib/Test');
 export interface Descriptor {
 	assertDescriptor(descriptor: Object): void;
 	missingRequirementsMessage?: string;
-	name: string;
+	name?: string;
 	requirementsCheck?(tunnel: Tunnel): boolean;
 	tunnelClass: typeof Tunnel;
 }
@@ -23,8 +23,6 @@ export default function (descriptor: Descriptor): any {
 	}
 
 	const suite: any = {
-		name: descriptor.name,
-
 		beforeEach() {
 			suite.tunnel = new _TunnelConstructor();
 			metRequirements = !descriptor.requirementsCheck || descriptor.requirementsCheck(suite.tunnel);
@@ -46,6 +44,10 @@ export default function (descriptor: Descriptor): any {
 			});
 		}
 	};
+
+	if (descriptor.name) {
+		suite.name = descriptor.name;
+	}
 
 	return suite;
 }
