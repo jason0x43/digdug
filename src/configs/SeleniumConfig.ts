@@ -8,7 +8,7 @@ import { RemoteFile } from '../SeleniumTunnel';
  * @constructor
  */
 export default class SeleniumConfig implements RemoteFile {
-	constructor(config: string | Object) {
+	constructor(config?: string | Object) {
 		if (typeof config === 'string') {
 			this.version = config;
 		}

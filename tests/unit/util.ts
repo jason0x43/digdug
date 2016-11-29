@@ -1,7 +1,7 @@
 import * as registerSuite from 'intern!object';
 import * as assert from 'intern/chai!assert';
 import * as sinon from 'sinon';
-import { mixin, on } from 'digdug/util';
+import { mixin, on } from 'src/util';
 import { EventEmitter } from 'events';
 
 registerSuite({

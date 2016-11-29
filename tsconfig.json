@@ -1,21 +1,23 @@
 {
+	"version": "2.0.0",
 	"compilerOptions": {
+		"allowSyntheticDefaultImports": true,
+		"baseUrl": ".",
+		"declaration": true,
 		"module": "umd",
 		"moduleResolution": "node",
-		"declaration": true,
 		"noImplicitAny": true,
 		"noImplicitThis": true,
 		"noUnusedParameters": true,
 		"noUnusedLocals": true,
-		"removeComments": true,
-		"preserveConstEnums": true,
-		"allowSyntheticDefaultImports": true,
-		"sourceMap": true,
 		"outDir": "./dist",
+		"preserveConstEnums": true,
+		"removeComments": true,
+		"sourceMap": true,
 		"target": "ES5"
 	},
 	"paths": {
-		"digdug/*": [
+		"src/*": [
 			"./src/*"
 		]
 	},

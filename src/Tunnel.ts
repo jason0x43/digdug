@@ -89,7 +89,7 @@ export interface NormalizedEnvironment {
  */
 
 export default class Tunnel extends Evented implements Url, DownloadOptions {
-	constructor(kwArgs: TunnelOptions) {
+	constructor(kwArgs?: TunnelOptions) {
 		super();
 		mixin(this, kwArgs);
 	}
@@ -592,7 +592,7 @@ export default class Tunnel extends Evented implements Url, DownloadOptions {
 	 *
 	 * @returns An object containing the response and helper functions
 	 */
-	getEnvironments() {
+	getEnvironments(): Promise<NormalizedEnvironment[]> {
 		if (!this.environmentUrl) {
 			return Promise.resolve([]);
 		}

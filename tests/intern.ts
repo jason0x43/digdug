@@ -6,7 +6,7 @@ export const maxConcurrency = 3;
 
 export const loaderOptions = {
 	packages: [
-		{ name: 'digdug', location: './dist/src' },
+		{ name: 'src', location: './dist/src' },
 		{ name: 'tests', location: './dist/tests' },
 		{ name: 'sinon', location: './node_modules/sinon/pkg', main: 'sinon' }
 	]
