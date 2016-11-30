@@ -24,7 +24,7 @@ export default class ChromeConfig implements DriverFile {
 		let platform = 'win32';
 
 		if (this.platform === 'linux') {
-			const arch = (this.arch === 'x64' ? '64' : '32')
+			const arch = (this.arch === 'x64' ? '64' : '32');
 			platform = `linux${ arch }`;
 		}
 		else if (this.platform === 'darwin') {
