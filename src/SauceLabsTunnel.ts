@@ -521,7 +521,7 @@ export default class SauceLabsTunnel extends Tunnel {
 
 mixin(SauceLabsTunnel.prototype, {
 	accessKey: process.env.SAUCE_ACCESS_KEY,
-	directory: joinPath(__dirname, 'saucelabs'),
+	directory: joinPath(process.cwd(), 'saucelabs'),
 	environmentUrl: 'https://saucelabs.com/rest/v1/info/platforms/webdriver',
 	isSharedTunnel: false,
 	logFile: null,

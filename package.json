@@ -27,7 +27,8 @@
     "typescript": "^2.0.10"
   },
   "scripts": {
-    "build": "tsc",
+    "clean": "rm -rf dist",
+    "build": "tsc && cp ./src/interfaces.d.ts ./dist/src && tsc -p tsconfig.tests.json",
     "test": "./node_modules/.bin/intern-client config=dist/tests/intern"
   },
   "bugs": "https://github.com/theintern/digdug/issues",

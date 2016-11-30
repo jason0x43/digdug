@@ -127,7 +127,7 @@ export default class SeleniumTunnel extends Tunnel {
 	serviceTimeout: number;
 
 	get directory() {
-		return joinPath(__dirname, 'selenium-standalone');
+		return joinPath(process.cwd(), 'selenium-standalone');
 	}
 
 	get executable() {

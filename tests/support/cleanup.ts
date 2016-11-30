@@ -1,4 +1,4 @@
-import args from 'intern';
+import { args } from 'intern';
 import { existsSync, readdirSync, lstatSync, unlinkSync, rmdirSync } from 'fs';
 import { join as joinPath } from 'path';
 import Tunnel from 'src/Tunnel';
@@ -7,7 +7,7 @@ import Tunnel from 'src/Tunnel';
  * @param tunnel
  */
 export function deleteTunnelFiles(tunnel: Tunnel): void {
-	if (!tunnel || (<any> args).noClean) {
+	if (!tunnel || args.noClean) {
 		return;
 	}
 

@@ -252,7 +252,7 @@ export default class TestingBotTunnel extends Tunnel {
 mixin(TestingBotTunnel.prototype, {
 	apiKey: process.env.TESTINGBOT_KEY,
 	apiSecret: process.env.TESTINGBOT_SECRET,
-	directory: joinPath(__dirname, 'testingbot'),
+	directory: joinPath(process.cwd(), 'testingbot'),
 	executable: 'java',
 	fastFailDomains: null,
 	logFile: null,

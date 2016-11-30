@@ -10,10 +10,10 @@ import { chmodSync } from 'fs';
 import { IResponse } from 'dojo/request';
 import { DownloadOptions } from './Tunnel';
 import { Url, parse as parseUrl } from 'url';
-import JobState = digdug.JobState;
 import request = require('dojo/request');
 import {ChildDescriptor} from './Tunnel';
 import { INodeRequestOptions } from 'dojo/request/node';
+import { JobState } from './interfaces';
 
 export interface BrowserStackEnvironment {
 	browser: string;
@@ -218,7 +218,7 @@ export default class BrowserStackTunnel extends Tunnel {
 		const handle = on(childProcess.stdout, 'data', (chunk: Buffer | string) => {
 			chunk = String(chunk);
 			if (typeof chunk === 'string') {
-				var error = /\s*\*\*\* Error: (.*)$/m.exec(chunk);
+				const error = /\s*\*\*\* Error: (.*)$/m.exec(chunk);
 				if (error) {
 					handle.remove();
 					dfd.reject(new Error(`The tunnel reported: ${ error[1] }`));
@@ -228,7 +228,7 @@ export default class BrowserStackTunnel extends Tunnel {
 					dfd.resolve();
 				}
 				else {
-					var line = chunk.replace(/^\s+/, '').replace(/\s+$/, '');
+					const line = chunk.replace(/^\s+/, '').replace(/\s+$/, '');
 					if (
 						/^BrowserStackLocal v/.test(line) ||
 						/^Connecting to BrowserStack/.test(line) ||
@@ -325,7 +325,7 @@ export default class BrowserStackTunnel extends Tunnel {
 mixin(BrowserStackTunnel.prototype, {
 	accessKey: process.env.BROWSERSTACK_ACCESS_KEY,
 	automatoOnly: true,
-	directory: joinPath(__dirname, 'browserstack'),
+	directory: joinPath(process.cwd(), 'browserstack'),
 	environmentUrl: 'https://www.browserstack.com/automate/browsers.json',
 	forceLocal: false,
 	hostname: 'hub.browserstack.com',

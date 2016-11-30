@@ -6,7 +6,7 @@ import SauceLabsTunnel from 'src/SauceLabsTunnel';
 let tunnel: SauceLabsTunnel;
 
 registerSuite({
-	name: 'SauceLabsTunnel',
+	name: 'unit/SauceLabsTunnel',
 
 	afterEach() {
 		const promise = cleanup(tunnel);
@@ -37,12 +37,14 @@ registerSuite({
 			assert.match(tunnel.executable, executable);
 		},
 
-		'linux'() {
+		'linux non-x64 architecture'() {
 			tunnel.platform = 'linux';
+			tunnel.architecture = 'foo';
 			assert.equal(tunnel.executable, 'java');
 		},
 
-		'x64'() {
+		'linux x64'() {
+			tunnel.platform = 'linux';
 			tunnel.architecture = 'x64';
 			const executable = /\.\/sc-\d+\.\d+(?:\.\d+)?-linux\/bin\/sc/;
 			assert.match(tunnel.executable, executable);

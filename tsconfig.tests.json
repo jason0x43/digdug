@@ -10,17 +10,21 @@
 		"noImplicitThis": true,
 		"noUnusedParameters": true,
 		"noUnusedLocals": true,
-		"outDir": "./dist/src",
+		"outDir": "./dist/tests",
 		"preserveConstEnums": true,
 		"removeComments": true,
 		"sourceMap": true,
-		"target": "ES5"
+		"target": "ES5",
+		"paths": {
+			"src/*": [
+				"./dist/src/*"
+			]
+		}
 	},
 	"files": [
-		"./node_modules/intern/typings/dojo2/dojo.d.ts",
-		"./types/decompress/decompress.d.ts"
+		"./node_modules/intern/typings/intern/intern.d.ts"
 	],
 	"include": [
-		"./src/**/*.ts"
+		"./tests/**/*.ts"
 	]
 }
