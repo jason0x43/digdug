@@ -11,9 +11,9 @@ import { cleanup, deleteTunnelFiles } from '../support/cleanup';
 import SeleniumConfig from 'src/configs/SeleniumConfig';
 import checkRemote from '../support/checkRemote';
 import Tunnel from 'src/Tunnel';
+import tunnelTest from '../support/tunnelTest';
 import request = require('dojo/request');
 import Test = require('intern/lib/Test');
-import tunnelTest from '../support/tunnelTest';
 
 const PORT = '4445';
 let tunnel: SeleniumTunnel;

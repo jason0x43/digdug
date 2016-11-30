@@ -6,16 +6,13 @@ import DojoPromise = require('dojo/Promise');
 import decompress = require('decompress');
 import Evented = require('dojo/Evented');
 import { mixin, on } from './util';
-import { format as formatUrl } from 'url';
+import { format as formatUrl, Url } from 'url';
 import { existsSync } from 'fs';
 import { join as joinPath } from 'path';
 import * as sendRequest from 'dojo/request/node';
-import { IRequestError } from 'dojo/request';
-import { spawn } from 'child_process';
+import { IRequestError, IResponse } from 'dojo/request';
+import { spawn, ChildProcess } from 'child_process';
 import { Deferred } from 'dojo/Promise';
-import { ChildProcess } from 'child_process';
-import { Url } from 'url';
-import { IResponse } from 'dojo/request';
 import { Handle, JobState } from './interfaces';
 
 // TODO: Spawned processes are not getting cleaned up if there is a crash

@@ -2,7 +2,7 @@ import * as registerSuite from 'intern!object';
 import * as assert from 'intern/chai!assert';
 import createCommonTests from './common';
 import BrowserStackTunnel from 'src/BrowserStackTunnel';
-import Tunnel, { NormalizedEnvironment} from 'src/Tunnel';
+import Tunnel, { NormalizedEnvironment } from 'src/Tunnel';
 import tunnelTest from '../support/tunnelTest';
 import Test = require('intern/lib/Test');
 

@@ -2,18 +2,15 @@
  * @module digdug/BrowserStackTunnel
  */
 
-import Tunnel from './Tunnel';
-import {TunnelOptions} from './Tunnel';
+import Tunnel, { TunnelOptions, DownloadOptions, ChildDescriptor } from './Tunnel';
 import { join as joinPath } from 'path';
 import { mixin, on } from './util';
 import { chmodSync } from 'fs';
 import { IResponse } from 'dojo/request';
-import { DownloadOptions } from './Tunnel';
 import { Url, parse as parseUrl } from 'url';
-import request = require('dojo/request');
-import {ChildDescriptor} from './Tunnel';
 import { INodeRequestOptions } from 'dojo/request/node';
 import { JobState } from './interfaces';
+import request = require('dojo/request');
 
 export interface BrowserStackEnvironment {
 	browser: string;

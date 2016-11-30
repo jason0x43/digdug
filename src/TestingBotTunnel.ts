@@ -2,19 +2,16 @@
  * @module digdug/TestingBotTunnel
  */
 
-import Tunnel from './Tunnel';
+import Tunnel, { NormalizedEnvironment, TunnelOptions, ChildDescriptor } from './Tunnel';
 import { mixin, on } from './util';
 import { join as joinPath } from 'path';
 import { parse as parseUrl } from 'url';
-import {INodeRequestOptions} from 'dojo/request/node';
+import { INodeRequestOptions } from 'dojo/request/node';
 import { tmpdir } from 'os';
 import { watchFile, unwatchFile, existsSync } from 'fs';
-import {NormalizedEnvironment} from './Tunnel';
-import {TunnelOptions} from './Tunnel';
-import {JobState} from './interfaces';
+import { JobState } from './interfaces';
 import ioQuery = require('dojo/io-query');
 import request = require('dojo/request');
-import {ChildDescriptor} from './Tunnel';
 
 export interface TestingBotEnvironment {
 	selenium_name: string;

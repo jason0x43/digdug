@@ -3,8 +3,8 @@
  */
 
 import Tunnel from './Tunnel';
-import DojoPromise = require('dojo/Promise');
 import { mixin } from './util';
+import DojoPromise = require('dojo/Promise');
 
 /**
  * A no-op tunnel.
