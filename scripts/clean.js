@@ -15,4 +15,3 @@ shell.echo('### Cleaning DigDug');
 	console.log('removing ' + dir);
 	shell.rm('-rf', dir);
 });
-

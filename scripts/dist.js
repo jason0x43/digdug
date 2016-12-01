@@ -3,6 +3,7 @@
 var shell = require('shelljs');
 var path = require('path');
 var exec = require('./common').exec;
+var exitGracefully = require('./common').exitGracefully;
 
 var dir = path.join(__dirname, '..');
 
@@ -31,4 +32,5 @@ exec('node ./scripts/clean.js')
 			var dest = files[src];
 			shell.cp(src, dest);
 		}
-	});
+	})
+	.catch(exitGracefully);

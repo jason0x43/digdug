@@ -3,7 +3,7 @@
 var shell = require('shelljs');
 var path = require('path');
 var exec = require('./common').exec;
-var fs = require('fs');
+var exitGracefully = require('./common').exitGracefully;
 
 var dir = path.join(__dirname, '../dist/src');
 var package = require(path.join(dir, 'package.json'));
@@ -25,5 +25,5 @@ function prepublishCheck() {
 
 if (prepublishCheck()) {
 	shell.cd(dir);
-	exec('npm publish');
+	exec('npm publish').catch(exitGracefully);
 }
