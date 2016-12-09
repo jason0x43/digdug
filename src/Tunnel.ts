@@ -222,8 +222,10 @@ export default class Tunnel extends Evented implements Url, DownloadOptions {
 	verbose: boolean;
 
 	protected  _startTask: DojoPromise<ChildDescriptor>;
+	protected  _stopTask: Promise<number>;
 	protected _handles: Handle[] = null;
 	protected _process: ChildProcess = null;
+	protected _state: 'stopped' | 'starting' | 'running' | 'stopping' = 'stopped';
 
 	/**
 	 * The URL that a WebDriver client should used to interact with this service.
@@ -438,17 +440,14 @@ export default class Tunnel extends Evented implements Url, DownloadOptions {
 	 * @returns {Promise.<void>} A promise that resolves once the tunnel has been established.
 	 */
 	start() {
-		if (this.isRunning) {
-			throw new Error('Tunnel is already running');
-		}
-		else if (this.isStopping) {
+		switch (this._state) {
+		case 'stopping':
 			throw new Error('Previous tunnel is still terminating');
-		}
-		else if (this.isStarting) {
+		case 'starting':
 			return this._startTask;
 		}
 
-		this.isStarting = true;
+		this._state = 'starting';
 
 		this._startTask = this
 			.download()
@@ -465,8 +464,7 @@ export default class Tunnel extends Evented implements Url, DownloadOptions {
 					on(childProcess.stdout, 'data', proxyEvent(this, 'stdout')),
 					on(childProcess.stderr, 'data', proxyEvent(this, 'stderr')),
 					on(childProcess, 'exit', () => {
-						this.isStarting = false;
-						this.isRunning = false;
+						this._state = 'stopped';
 					})
 				);
 				return child.deferred.promise;
@@ -475,13 +473,12 @@ export default class Tunnel extends Evented implements Url, DownloadOptions {
 		this._startTask.then(
 			() => {
 				this._startTask = null;
-				this.isStarting = false;
-				this.isRunning = true;
+				this._state = 'running';
 				this.emit('status', 'Ready');
 			},
 			error => {
 				this._startTask = null;
-				this.isStarting = false;
+				this._state = 'stopped';
 				this.emit('status', error.name === 'CancelError' ? 'Start cancelled' : 'Failed to start tunnel');
 			}
 		);
@@ -530,33 +527,37 @@ export default class Tunnel extends Evented implements Url, DownloadOptions {
 	 * A promise that resolves to the exit code for the tunnel once it has been terminated.
 	 */
 	stop(): Promise<number> {
-		if (this.isStopping) {
-			throw new Error('Tunnel is already terminating');
-		}
-		else if (this.isStarting) {
+		switch (this._state) {
+		case 'starting':
 			this._startTask.cancel();
-			return;
-		}
-		else if (!this.isRunning) {
-			throw new Error('Tunnel is not running');
+			return this._startTask.then(
+				function () {
+					return null;
+				},
+				function () {
+					return null;
+				}
+			);
+		case 'stopping':
+			return this._stopTask;
 		}
 
-		this.isRunning = false;
-		this.isStopping = true;
+		this._state = 'stopping';
 
-		return this._stop().then(
+		this._stopTask = this._stop().then(
 			returnValue => {
 				clearHandles(this._handles);
 				this._process = this._handles = null;
-				this.isRunning = this.isStopping = false;
+				this._state = 'stopped';
 				return returnValue;
 			},
 			error => {
-				this.isRunning = true;
-				this.isStopping = false;
+				this._state = 'running';
 				throw error;
 			}
 		);
+
+		return this._stopTask;
 	}
 
 	/**

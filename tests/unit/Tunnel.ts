@@ -1,5 +1,6 @@
 import * as assert from 'intern/chai!assert';
 import Tunnel from 'src/Tunnel';
+import DojoPromise = require('dojo/Promise');
 import Test = require('intern/lib/Test');
 import registerSuite = require('intern!object');
 
@@ -39,25 +40,26 @@ registerSuite({
 	},
 
 	'#stop': {
-		'stop a stopping tunnel; throws'() {
-			tunnel.isStopping = true;
-			assert.throws(function () {
-				tunnel.stop();
-			});
+		'stop a stopping tunnel'() {
+			tunnel['_state'] = 'stopping';
+			return tunnel.stop();
 		},
 
-		'stop a starting tunnnel; throws'() {
-			tunnel.isStarting = true;
-			assert.throws(function () {
-				tunnel.stop();
+		'stop a starting tunnnel'() {
+			const startTask = new DojoPromise<any>(function (resolve) {
+				setTimeout(resolve);
 			});
+			tunnel['_state'] = 'starting';
+			tunnel['_startTask'] = startTask;
+			tunnel['_stop'] = () => Promise.resolve(0);
+			return tunnel.stop();
 		},
 
 		'stop a tunnel that is not running; throws'() {
-			tunnel.isRunning = false;
-			assert.throws(function () {
-				tunnel.stop();
-			});
+			tunnel['_state'] = 'stopped';
+			tunnel['_stop'] = () => Promise.resolve(0);
+			tunnel['_handles'] = [];
+			return tunnel.stop();
 		}
 	},
 
