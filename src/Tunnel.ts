@@ -84,7 +84,6 @@ export interface NormalizedEnvironment {
  * @constructor module:digdug/Tunnel
  * @param {Object} kwArgs A map of properties that should be set on the new instance.
  */
-
 export default class Tunnel extends Evented implements Url, DownloadOptions {
 	constructor(kwArgs?: TunnelOptions) {
 		super();
@@ -234,7 +233,7 @@ export default class Tunnel extends Evented implements Url, DownloadOptions {
 	 * @type {string}
 	 * @readonly
 	 */
-	get clientUrl(): string {
+	get clientUrl() {
 		return formatUrl(this);
 	}
 
@@ -246,7 +245,7 @@ export default class Tunnel extends Evented implements Url, DownloadOptions {
 	 * @type {Object}
 	 * @readonly
 	 */
-	get extraCapabilities(): Object {
+	get extraCapabilities() {
 		return {};
 	}
 
@@ -258,7 +257,7 @@ export default class Tunnel extends Evented implements Url, DownloadOptions {
 	 * @type {boolean}
 	 * @readonly
 	 */
-	get isDownloaded(): boolean {
+	get isDownloaded() {
 		return existsSync(joinPath(this.directory, this.executable));
 	}
 
@@ -271,7 +270,7 @@ export default class Tunnel extends Evented implements Url, DownloadOptions {
 	 * @param {boolean} forceDownload Force downloading the software even if it already has been downloaded.
 	 * @returns {Promise.<void>} A promise that resolves once the download and extraction process has completed.
 	 */
-	download(forceDownload: boolean = false): DojoPromise<any> {
+	download(forceDownload = false): DojoPromise<any> {
 		if (!forceDownload && this.isDownloaded) {
 			return DojoPromise.resolve(null);
 		}
@@ -286,7 +285,8 @@ export default class Tunnel extends Evented implements Url, DownloadOptions {
 			});
 
 			const request = sendRequest(options.url, { proxy: options.proxy });
-			return request.then((response: IResponse) => {
+			return request.then(
+				response => {
 					resolve(this._postDownload(response, options));
 				},
 				function (error: IRequestError) {
@@ -296,7 +296,7 @@ export default class Tunnel extends Evented implements Url, DownloadOptions {
 							error
 					);
 				},
-				(info) => {
+				info => {
 					this.emit('filedownloadprogress', {
 						url: options.url,
 						progress: info
@@ -325,8 +325,7 @@ export default class Tunnel extends Evented implements Url, DownloadOptions {
 	 * @protected
 	 * @returns {string[]} A list of command-line arguments.
 	 */
-	protected _makeArgs(... values: string[]): string[];
-	protected _makeArgs(): string[] {
+	protected _makeArgs(..._values: string[]): string[] {
 		return [];
 	}
 
@@ -342,7 +341,7 @@ export default class Tunnel extends Evented implements Url, DownloadOptions {
 	 * An object containing a newly spawned Process and a Deferred that will be resolved once the tunnel has started
 	 * successfully.
 	 */
-	protected _makeChild(... values: string[]): ChildDescriptor {
+	protected _makeChild(...values: string[]) {
 		function handleChildExit() {
 			if (dfd.promise.state === DojoPromise.State.PENDING) {
 				const message = 'Tunnel failed to start: ' + (errorMessage || ('Exit code: ' + exitCode));
@@ -351,8 +350,8 @@ export default class Tunnel extends Evented implements Url, DownloadOptions {
 		}
 
 		const command = this.executable;
-		const args = this._makeArgs(... values);
-		const options = this._makeOptions(... values);
+		const args = this._makeArgs(...values);
+		const options = this._makeOptions(...values);
 
 		const dfd = new DojoPromise.Deferred(function (reason) {
 			child.kill('SIGINT');
@@ -415,8 +414,7 @@ export default class Tunnel extends Evented implements Url, DownloadOptions {
 	 * @protected
 	 * @returns {Object} A set of options matching those provided to Node.js {@link module:child_process.spawn}.
 	 */
-	protected _makeOptions(... values: string[]): SpawnOptions;
-	protected _makeOptions(): SpawnOptions {
+	protected _makeOptions(..._values: string[]): SpawnOptions {
 		return {
 			cwd: this.directory,
 			env: process.env
@@ -430,8 +428,7 @@ export default class Tunnel extends Evented implements Url, DownloadOptions {
 	 * @param {JobState} data Data to send to the tunnel provider about the job.
 	 * @returns {Promise.<void>} A promise that resolves once the job state request is complete.
 	 */
-	sendJobState(jobId: string, data: JobState): Promise<void>;
-	sendJobState(): Promise<void> {
+	sendJobState(_jobId: string, _data: JobState): Promise<void> {
 		return Promise.reject(new Error('Job state is not supported by this tunnel.'));
 	}
 
@@ -455,14 +452,14 @@ export default class Tunnel extends Evented implements Url, DownloadOptions {
 
 		this._startTask = this
 			.download()
-			.then(null, null, (progress) => {
+			.then(null, null, progress => {
 				this.emit('downloadprogress', progress);
 			})
 			.then(() => {
 				this._handles = [];
 				return this._start();
 			})
-			.then((child) => {
+			.then(child => {
 				const childProcess = this._process = child.process;
 				this._handles.push(
 					on(childProcess.stdout, 'data', proxyEvent(this, 'stdout')),
@@ -475,16 +472,19 @@ export default class Tunnel extends Evented implements Url, DownloadOptions {
 				return child.deferred.promise;
 			});
 
-		this._startTask.then(() => {
-			this._startTask = null;
-			this.isStarting = false;
-			this.isRunning = true;
-			this.emit('status', 'Ready');
-		}, (error: Error) => {
-			this._startTask = null;
-			this.isStarting = false;
-			this.emit('status', error.name === 'CancelError' ? 'Start cancelled' : 'Failed to start tunnel');
-		});
+		this._startTask.then(
+			() => {
+				this._startTask = null;
+				this.isStarting = false;
+				this.isRunning = true;
+				this.emit('status', 'Ready');
+			},
+			error => {
+				this._startTask = null;
+				this.isStarting = false;
+				this.emit('status', error.name === 'CancelError' ? 'Start cancelled' : 'Failed to start tunnel');
+			}
+		);
 
 		return this._startTask;
 	}
@@ -502,7 +502,7 @@ export default class Tunnel extends Evented implements Url, DownloadOptions {
 	 * An object containing a reference to the child process, and a Deferred that is resolved once the tunnel is
 	 * ready for use. Normally this will be the object returned from a call to `Tunnel#_makeChild`.
 	 */
-	protected _start(): ChildDescriptor {
+	protected _start() {
 		function resolve() {
 			clearHandles(handles);
 			dfd.resolve();
@@ -544,16 +544,19 @@ export default class Tunnel extends Evented implements Url, DownloadOptions {
 		this.isRunning = false;
 		this.isStopping = true;
 
-		return this._stop().then((returnValue: number) => {
-			clearHandles(this._handles);
-			this._process = this._handles = null;
-			this.isRunning = this.isStopping = false;
-			return returnValue;
-		}, (error) => {
-			this.isRunning = true;
-			this.isStopping = false;
-			throw error;
-		});
+		return this._stop().then(
+			returnValue => {
+				clearHandles(this._handles);
+				this._process = this._handles = null;
+				this.isRunning = this.isStopping = false;
+				return returnValue;
+			},
+			error => {
+				this.isRunning = true;
+				this.isStopping = false;
+				throw error;
+			}
+		);
 	}
 
 	/**
@@ -566,9 +569,8 @@ export default class Tunnel extends Evented implements Url, DownloadOptions {
 	 * @returns {Promise.<number>} A promise that resolves once the tunnel has shut down.
 	 */
 	protected _stop(): Promise<number> {
-		return new Promise((resolve) => {
+		return new Promise(resolve => {
 			const childProcess = this._process;
-
 			childProcess.once('exit', resolve);
 			childProcess.kill('SIGINT');
 		});
@@ -598,7 +600,7 @@ export default class Tunnel extends Evented implements Url, DownloadOptions {
 			password: this.accessKey,
 			user: this.username,
 			proxy: this.proxy
-		}).then((response: IResponse) => {
+		}).then(response => {
 			if (response.statusCode >= 200 && response.statusCode < 400) {
 				return JSON.parse(response.data.toString()).map(this._normalizeEnvironment, this);
 			}

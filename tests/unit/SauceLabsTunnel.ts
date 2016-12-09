@@ -1,7 +1,7 @@
-import * as registerSuite from 'intern!object';
 import * as assert from 'intern/chai!assert';
 import { cleanup } from '../support/cleanup';
 import SauceLabsTunnel from 'src/SauceLabsTunnel';
+import registerSuite = require('intern!object');
 
 let tunnel: SauceLabsTunnel;
 

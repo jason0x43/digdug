@@ -1,8 +1,8 @@
-import * as registerSuite from 'intern!object';
 import * as assert from 'intern/chai!assert';
 import * as sinon from 'sinon';
 import { mixin, on } from 'src/util';
 import { EventEmitter } from 'events';
+import registerSuite = require('intern!object');
 
 registerSuite({
 	mixin: {
@@ -29,7 +29,7 @@ registerSuite({
 				{ another: 'two' }
 			];
 			const target = {};
-			const actual = mixin<{ property: string, another: string }>(target, ... source);
+			const actual = mixin<{ property: string, another: string }>(target, ...source);
 
 			assert.equal(actual, target);
 			assert.deepEqual(actual, {
@@ -59,10 +59,10 @@ registerSuite({
 				{ property: 'two' }
 			];
 			const target = {};
-			const actual = mixin<{ property: string }>(target, ... source);
+			const actual = mixin<{ property: string }>(target, ...source);
 
 			assert.deepEqual(actual, {
-				property: 'two',
+				property: 'two'
 			});
 		},
 
@@ -79,7 +79,7 @@ registerSuite({
 			const actual = mixin<{ property: string }>(target, source);
 
 			assert.deepEqual(actual, {
-				property: 'one',
+				property: 'one'
 			});
 		}
 	},

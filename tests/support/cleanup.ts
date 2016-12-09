@@ -6,7 +6,7 @@ import Tunnel from 'src/Tunnel';
  * Deletes the directory used by the tunnel
  * @param tunnel
  */
-export function deleteTunnelFiles(tunnel: Tunnel): void {
+export function deleteTunnelFiles(tunnel: Tunnel) {
 	if (!tunnel || args.noClean) {
 		return;
 	}
@@ -43,10 +43,11 @@ export function deleteTunnelFiles(tunnel: Tunnel): void {
  * @param tunnel
  * @return {Promise} a promise resolved when cleanup is complete
  */
-export function cleanup(tunnel: Tunnel): Promise<void> {
+export function cleanup(tunnel: Tunnel) {
 	if (!tunnel) {
 		return;
 	}
+
 	if (tunnel.isRunning) {
 		const deleteFiles = function () {
 			deleteTunnelFiles(tunnel);

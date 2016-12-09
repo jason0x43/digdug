@@ -1,26 +1,25 @@
 {
-	"version": "2.0.0",
-	"compilerOptions": {
-		"allowSyntheticDefaultImports": true,
-		"baseUrl": ".",
-		"declaration": true,
-		"module": "umd",
-		"moduleResolution": "node",
-		"noImplicitAny": true,
-		"noImplicitThis": true,
-		"noUnusedParameters": true,
-		"noUnusedLocals": true,
-		"outDir": "./dist/src",
-		"preserveConstEnums": true,
-		"removeComments": true,
-		"sourceMap": true,
-		"target": "ES5"
-	},
-	"files": [
-		"./node_modules/intern/typings/dojo2/dojo.d.ts",
-		"./types/decompress/decompress.d.ts"
-	],
-	"include": [
-		"./src/**/*.ts"
-	]
+  "compilerOptions": {
+    "allowSyntheticDefaultImports": true,
+    "declaration": true,
+    "module": "umd",
+    "moduleResolution": "node",
+    "noImplicitAny": true,
+    "noImplicitThis": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "outDir": "./_build",
+    "preserveConstEnums": true,
+    "removeComments": true,
+    "rootDir": ".",
+    "sourceMap": true,
+    "target": "ES5"
+  },
+  "files": [
+    "./node_modules/intern/typings/dojo2/dojo.d.ts",
+    "./types/decompress/decompress.d.ts"
+  ],
+  "include": [
+    "./src/**/*.ts"
+  ]
 }

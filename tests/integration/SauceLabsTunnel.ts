@@ -1,12 +1,21 @@
-import * as registerSuite from 'intern!object';
 import * as assert from 'intern/chai!assert';
+import { cleanup } from '../support/cleanup';
 import createCommonTests from './common';
 import SauceLabsTunnel from 'src/SauceLabsTunnel';
 import tunnelTest from '../support/tunnelTest';
 import Test = require('intern/lib/Test');
+import registerSuite = require('intern!object');
 
 registerSuite({
 	name: 'integration/SauceLabsTunnel',
+
+	setup: function () {
+		return cleanup(new SauceLabsTunnel());
+	},
+
+	teardown: function () {
+		return cleanup(new SauceLabsTunnel());
+	},
 
 	'common tests': createCommonTests({
 		tunnelClass: SauceLabsTunnel,

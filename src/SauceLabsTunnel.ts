@@ -1,15 +1,15 @@
 import { mixin, on } from './util';
-import {TunnelOptions, default as Tunnel, DownloadOptions, NormalizedEnvironment, ChildDescriptor} from './Tunnel';
+import Tunnel, { TunnelOptions, DownloadOptions, ChildDescriptor } from './Tunnel';
 import { join as joinPath } from 'path';
 import { parse as parseUrl, format as formatUrl } from 'url';
 import { existsSync, chmodSync, watchFile, unwatchFile } from 'fs';
 import { IResponse } from 'dojo/request';
-import {Url} from 'url';
-import request = require('dojo/request');
+import { Url } from 'url';
 import { JobState } from './interfaces';
 import { tmpdir } from 'os';
+import { INodeRequestOptions } from 'dojo/request/node';
+import request = require('dojo/request');
 import DojoPromise = require('dojo/Promise');
-import {INodeRequestOptions} from 'dojo/request/node';
 
 export interface SauceLabsEnvironment {
 	short_version: string;
@@ -29,16 +29,6 @@ export interface SauceLabsEnvironment {
  * @extends module:digdug/Tunnel
  */
 export default class SauceLabsTunnel extends Tunnel {
-	constructor(kwArgs?: TunnelOptions) {
-		super(mixin({
-			directDomains: [],
-			tunnelDomains: [],
-			domainAuthentication: [],
-			fastFailDomains: [],
-			skipSslDomains: []
-		}, kwArgs));
-	}
-
 	apiSecret: string;
 
 	apiKey: string;
@@ -162,8 +152,18 @@ export default class SauceLabsTunnel extends Tunnel {
 	 */
 	environmentUrl: string;
 
+	constructor(kwArgs?: TunnelOptions) {
+		super(mixin({
+			directDomains: [],
+			tunnelDomains: [],
+			domainAuthentication: [],
+			fastFailDomains: [],
+			skipSslDomains: []
+		}, kwArgs));
+	}
+
 	get auth() {
-		return `${ this.username }:${ this.accessKey }`;
+		return `${this.username}:${this.accessKey}`;
 	}
 
 	get executable() {
@@ -172,7 +172,7 @@ export default class SauceLabsTunnel extends Tunnel {
 
 		if (platform === 'osx' || platform === 'win32' || (platform === 'linux' && architecture === 'x64')) {
 			const extension = platform === 'win32' ? '.exe' : '';
-			return `./sc-${ this.scVersion }-${ platform }/bin/sc${ extension }`;
+			return `./sc-${this.scVersion}-${platform}/bin/sc${extension}`;
 		}
 		else {
 			return 'java';
@@ -199,13 +199,13 @@ export default class SauceLabsTunnel extends Tunnel {
 	get url() {
 		const platform = this.platform === 'darwin' ? 'osx' : this.platform;
 		const architecture = this.architecture;
-		const baseUrl = `https://saucelabs.com/downloads/sc-${ this.scVersion }-`;
+		const baseUrl = `https://saucelabs.com/downloads/sc-${this.scVersion}-`;
 
 		if (platform === 'osx' || platform === 'win32') {
-			return `${ baseUrl }${ platform }.zip`;
+			return `${baseUrl}${platform}.zip`;
 		}
 		else if (platform === 'linux' && architecture === 'x64') {
-			return `${ baseUrl }${ platform }.tar.gz`;
+			return `${baseUrl}${platform}.tar.gz`;
 		}
 
 		// Sauce Connect 3 uses Java so should be able to run on other platforms that Sauce Connect 4 does not support
@@ -240,7 +240,7 @@ export default class SauceLabsTunnel extends Tunnel {
 		if (this.domainAuthentication.length) {
 			this.domainAuthentication.forEach(function (domain) {
 				const domainUrl = parseUrl(domain);
-				args.push('-a', `${ domainUrl.hostname }:${ domainUrl.port }:${ domainUrl.auth }`);
+				args.push('-a', `${domainUrl.hostname}:${domainUrl.port}:${domainUrl.auth}`);
 			});
 		}
 
@@ -342,11 +342,11 @@ export default class SauceLabsTunnel extends Tunnel {
 				}
 
 				if (response.statusCode !== 200) {
-					throw new Error(`Server reported ${ response.statusCode } with: ${ response.data }`);
+					throw new Error(`Server reported ${response.statusCode} with: ${response.data}`);
 				}
 			}
 			else {
-				throw new Error(`Server reported ${ response.statusCode } with no other data.`);
+				throw new Error(`Server reported ${response.statusCode} with no other data.`);
 			}
 		});
 	}
@@ -354,7 +354,7 @@ export default class SauceLabsTunnel extends Tunnel {
 	_start(): ChildDescriptor {
 		type MessageHandler = (message: string) => void;
 
-		const readStatus: MessageHandler = (message: string): void => {
+		const readStatus: MessageHandler = message => {
 			if (
 				message &&
 				message.indexOf('Please wait for') === -1 &&
@@ -368,7 +368,7 @@ export default class SauceLabsTunnel extends Tunnel {
 			}
 		};
 
-		const readStartupMessage: MessageHandler = (message: string): void => {
+		const readStartupMessage: MessageHandler = message => {
 			function reject(message: string) {
 				if (dfd.promise.state === DojoPromise.State.PENDING) {
 					dfd.reject(new Error(message));
@@ -407,7 +407,7 @@ export default class SauceLabsTunnel extends Tunnel {
 			readStatus(message);
 		};
 
-		const readRunningMessage: MessageHandler = (message: string): void => {
+		const readRunningMessage: MessageHandler = message => {
 			// Sauce Connect 3
 			if (message.indexOf('Problem connecting to Sauce Labs REST API') > -1) {
 				// It will just keep trying and trying and trying for a while, but it is a failure, so force it
@@ -418,10 +418,10 @@ export default class SauceLabsTunnel extends Tunnel {
 			readStatus(message);
 		};
 
-		const readyFile = joinPath(tmpdir(), 'saucelabs-' + Date.now());
+		const readyFile = joinPath(tmpdir(), `saucelabs-${Date.now()}`);
 		const child = this._makeChild(readyFile);
 		const { process: childProcess, deferred: dfd } = child;
-		let readMessage: MessageHandler = readStartupMessage;
+		let readMessage = readStartupMessage;
 
 		// Polling API is used because we are only watching for one file, so efficiency is not a big deal, and the
 		// `fs.watch` API has extra restrictions which are best avoided
@@ -446,8 +446,8 @@ export default class SauceLabsTunnel extends Tunnel {
 
 		// Sauce Connect exits with a zero status code when there is a failure, and outputs error messages to
 		// stdout, like a boss. Even better, it uses the "Error:" tag for warnings.
-		this._handles.push(on(childProcess.stdout, 'data', function (chunk: Buffer | string) {
-			String(chunk).split('\n').forEach(function (message: string) {
+		this._handles.push(on(childProcess.stdout, 'data', function (chunk) {
+			String(chunk).split('\n').forEach(function (message) {
 				// Get rid of the date/time prefix on each message
 				const delimiter = message.indexOf(' - ');
 				if (delimiter > -1) {
@@ -479,7 +479,7 @@ export default class SauceLabsTunnel extends Tunnel {
 	 * @returns a normalized descriptor
 	 * @private
 	 */
-	_normalizeEnvironment(environment: SauceLabsEnvironment): NormalizedEnvironment {
+	_normalizeEnvironment(environment: SauceLabsEnvironment) {
 		const windowsMap: { [ key: string ]: string } = {
 			'Windows 2003': 'Windows XP',
 			'Windows 2008': 'Windows 7',

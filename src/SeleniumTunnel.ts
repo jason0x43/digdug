@@ -2,9 +2,6 @@
  * @module digdug/SeleniumTunnel
  */
 
-import DojoPromise = require('dojo/Promise');
-import request = require('dojo/request');
-import mkdirp = require('mkdirp');
 import { mixin, on } from './util';
 import Tunnel, { DownloadOptions, ChildDescriptor } from './Tunnel';
 import { join as joinPath } from 'path';
@@ -15,6 +12,9 @@ import IeConfig from './configs/IeConfig';
 import FirefoxConfig from './configs/FirefoxConfig';
 import SeleniumConfig from './configs/SeleniumConfig';
 import { KwArgs } from './interfaces';
+import DojoPromise = require('dojo/Promise');
+import request = require('dojo/request');
+import mkdirp = require('mkdirp');
 
 /**
  * used to provide overrides for a driver
@@ -67,7 +67,7 @@ export interface RemoteFile {
 }
 
 /**
- * A remove driver file
+ * A remote driver file
  */
 export interface DriverFile extends RemoteFile {
 	seleniumProperty: string;
@@ -140,12 +140,12 @@ export default class SeleniumTunnel extends Tunnel {
 		});
 	}
 
-	download(forceDownload: boolean = false): DojoPromise<any> {
+	download(forceDownload = false): DojoPromise<any> {
 		if (!forceDownload && this.isDownloaded) {
 			return DojoPromise.resolve(null);
 		}
 
-		const tasks = this._getConfigs().map((config) => {
+		const tasks = this._getConfigs().map(config => {
 			const executable = config.executable;
 			const path = joinPath(this.directory, executable);
 
@@ -165,33 +165,33 @@ export default class SeleniumTunnel extends Tunnel {
 		return DojoPromise.all(tasks);
 	}
 
-	sendJobState(): Promise<void> {
+	sendJobState() {
 		// This is a noop for Selenium
 		return Promise.resolve<void>();
 	}
 
-	private _getConfigs(): RemoteFile[] {
+	private _getConfigs() {
 		const configs: RemoteFile[] = this._getDriverConfigs();
 		configs.push(new SeleniumConfig(this.seleniumVersion));
 		return configs;
 	}
 
-	private _getDriverConfigs(): DriverFile[] {
+	private _getDriverConfigs() {
 		return this.seleniumDrivers.map((data: DriverDescriptors) => {
 			if (typeof data === 'string') {
-				const _Constructor: DriverFileConstructor = this.driverNameMap[data];
-				return new _Constructor();
+				const Constructor: DriverFileConstructor = this.driverNameMap[data];
+				return new Constructor();
 			}
 			if (typeof data === 'object' && (<DriverProperties> data).name) {
 				const name: string = (<DriverProperties> data).name;
-				const _Constructor: DriverFileConstructor = this.driverNameMap[name];
-				return new _Constructor(data);
+				const Constructor: DriverFileConstructor = this.driverNameMap[name];
+				return new Constructor(data);
 			}
 			return <DriverFile> data;
 		});
 	}
 
-	protected _makeArgs(): string[] {
+	protected _makeArgs() {
 		const directory = this.directory;
 		const seleniumConfig = new SeleniumConfig(this.seleniumVersion);
 		const driverConfigs = this._getDriverConfigs();
@@ -204,12 +204,12 @@ export default class SeleniumTunnel extends Tunnel {
 
 		driverConfigs.reduce(function (args, config) {
 			const file = joinPath(directory, config.executable);
-			args.push(`-D${ config.seleniumProperty }=${ file }`);
+			args.push(`-D${config.seleniumProperty}=${file}`);
 			return args;
 		}, args);
 
 		if (this.seleniumArgs) {
-			args.splice(args.length, 0, ... this.seleniumArgs);
+			args.splice(args.length, 0, ...this.seleniumArgs);
 		}
 
 		if (this.verbose) {
@@ -256,15 +256,15 @@ export default class SeleniumTunnel extends Tunnel {
 	}
 
 	protected _stop() {
-		const url = `http://${ this.hostname }:${ this.port }/selenium-server/driver/?cmd=shutDownSeleniumServer`;
+		const url = `http://${this.hostname}:${this.port}/selenium-server/driver/?cmd=shutDownSeleniumServer`;
 		const options = {
 			timeout: this.serviceTimeout,
 			handleAs: 'text'
 		};
-		return request(url, options).then((response) => {
-			const text = response.data.toString();
-			if (text !== 'OKOK') {
-				throw new Error('Tunnel not shut down');
+		// Request that Selenium shut down, then ensure the process is killed
+		return request(url, options).then(response => {
+			if (response.data.toString() !== 'OKOK') {
+				console.warn('Selenium did not shut down cleanly');
 			}
 			return super._stop();
 		});

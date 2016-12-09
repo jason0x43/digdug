@@ -4,7 +4,7 @@ import SauceLabsTunnel from './SauceLabsTunnel';
 import SeleniumTunnel from './SeleniumTunnel';
 import TestingBotTunnel from './TestingBotTunnel';
 
-export = {
+export {
 	BrowserStackTunnel,
 	NullTunnel,
 	SauceLabsTunnel,

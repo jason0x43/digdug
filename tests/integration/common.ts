@@ -11,9 +11,9 @@ export interface Descriptor {
 	tunnelClass: typeof Tunnel;
 }
 
-export default function (descriptor: Descriptor): any {
+export default function (descriptor: Descriptor) {
 	let metRequirements = false;
-	const _TunnelConstructor: typeof Tunnel = descriptor.tunnelClass;
+	const TunnelConstructor: typeof Tunnel = descriptor.tunnelClass;
 
 	function assertNormalizedProperties(environment: NormalizedEnvironment) {
 		const message = ' undefined for ' + inspect(environment.descriptor);
@@ -24,7 +24,7 @@ export default function (descriptor: Descriptor): any {
 
 	const suite: any = {
 		beforeEach() {
-			suite.tunnel = new _TunnelConstructor();
+			suite.tunnel = new TunnelConstructor();
 			metRequirements = !descriptor.requirementsCheck || descriptor.requirementsCheck(suite.tunnel);
 		},
 

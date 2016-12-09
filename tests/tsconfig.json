@@ -1,0 +1,18 @@
+{
+  "compilerOptions": {
+    "baseUrl": ".",
+    "paths": {
+      "src/*": [
+        "../src/*", "../_build/src/*"
+      ]
+    }
+  },
+  "extends": "../tsconfig.json",
+  "files": [
+    "../node_modules/intern/typings/intern/intern.d.ts",
+    "../types/decompress/decompress.d.ts"
+  ],
+  "include": [
+    "./**/*.ts"
+  ]
+}

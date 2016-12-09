@@ -1,7 +1,7 @@
-import * as registerSuite from 'intern!object';
 import * as assert from 'intern/chai!assert';
 import BrowserStackTunnel from 'src/BrowserStackTunnel';
 import { cleanup } from '../support/cleanup';
+import registerSuite = require('intern!object');
 
 let tunnel: BrowserStackTunnel;
 
@@ -11,7 +11,7 @@ registerSuite({
 	},
 
 	afterEach: function () {
-		var promise = cleanup(tunnel);
+		const promise = cleanup(tunnel);
 		tunnel = null;
 		return promise;
 	},

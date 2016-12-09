@@ -1,4 +1,3 @@
-import * as registerSuite from 'intern!object';
 import * as assert from 'intern/chai!assert';
 import { args } from 'intern';
 import SeleniumTunnel, { DriverFile } from 'src/SeleniumTunnel';
@@ -6,14 +5,13 @@ import ChromeConfig from 'src/configs/ChromeConfig';
 import IeConfig from 'src/configs/IeConfig';
 import FirefoxConfig from 'src/configs/FirefoxConfig';
 import { readdirSync } from 'fs';
-import isSeleniumStarted from '../support/isSeleniumStarted';
 import { cleanup, deleteTunnelFiles } from '../support/cleanup';
 import SeleniumConfig from 'src/configs/SeleniumConfig';
 import checkRemote from '../support/checkRemote';
 import Tunnel from 'src/Tunnel';
 import tunnelTest from '../support/tunnelTest';
-import request = require('dojo/request');
 import Test = require('intern/lib/Test');
+import registerSuite = require('intern!object');
 
 const PORT = '4445';
 let tunnel: SeleniumTunnel;
@@ -79,11 +77,11 @@ function instrumentTunnel(tunnel: Tunnel) {
 	});
 }
 
-function assertDownload(config: Object = {}) {
+function assertDownload(config = {}) {
 	tunnel = new SeleniumTunnel(config);
-	const expected = (<any> tunnel)._getConfigs().map(function (config: DriverFile) {
+	const expected = tunnel['_getConfigs']().map(function (config) {
 		return config.executable;
-	}).filter(function (executable: string) {
+	}).filter(function (executable) {
 		// Remove any skipped selenium standalone
 		return executable !== '..';
 	});
@@ -92,31 +90,21 @@ function assertDownload(config: Object = {}) {
 		instrumentTunnel(tunnel);
 	}
 
-	return tunnel.download()
-		.then(function () {
-			const files = readdirSync(tunnel.directory);
-			assert.includeMembers(files, expected);
-		});
+	return tunnel.download().then(function () {
+		const files = readdirSync(tunnel.directory);
+		assert.includeMembers(files, expected);
+	});
 }
 
 registerSuite({
 	name: 'integration/SeleniumTunnel',
 
-	beforeEach(test: any) {
-		test.timeout =  10 * 60 * 1000; // ten minutes
-
-		// Ensure Selenium is not running on our test port
-		return isSeleniumStarted(PORT)
-			.then(function () {
-				return request(`http://localhost:${ PORT }/selenium-server/driver/?cmd=shutDownSeleniumServer`, {});
-			}, function () {
-				// We don't expect selenium to be already running
-				return true;
-			});
+	setup() {
+		return cleanup(new SeleniumTunnel());
 	},
 
-	afterEach: function () {
-		return cleanup(tunnel);
+	teardown() {
+		return cleanup(new SeleniumTunnel());
 	},
 
 	'remote artifact exists': (function () {
@@ -162,52 +150,33 @@ registerSuite({
 		return tests;
 	})(),
 
-	'isDownloaded': {
-		'returns false when files are missing'(this: Test) {
-			if (args.noClean) {
-				return this.skip('Cleanup is disabled');
-			}
-			tunnel = new SeleniumTunnel();
-			deleteTunnelFiles(tunnel);
-
-			assert.isFalse(tunnel.isDownloaded);
+	'isDownloaded'(this: Test) {
+		if (args.noClean) {
+			return this.skip('Cleanup is disabled');
 		}
+		tunnel = new SeleniumTunnel();
+		deleteTunnelFiles(tunnel);
+
+		assert.isFalse(tunnel.isDownloaded, 'expected isDownloaded to be false');
 	},
 
-	'start': {
-		'runs selenium-standalone'(this: Test) {
-			tunnel = new SeleniumTunnel({
-				port: PORT,
-				seleniumDrivers: [ ]
-			});
+	'start'(this: Test) {
+		tunnel = new SeleniumTunnel({
+			port: PORT,
+			seleniumDrivers: [ ]
+		});
 
-			return tunnelTest(this.async(120000), tunnel);
-		}
+		return tunnelTest(this.async(120000), tunnel);
 	},
 
-	'stop': {
-		beforeEach: function () {
-			tunnel = new SeleniumTunnel({
-				port: PORT,
-				seleniumDrivers: [ ]
-			});
+	'stop'() {
+		tunnel = new SeleniumTunnel({
+			port: PORT,
+			seleniumDrivers: [ ]
+		});
 
-			return tunnel.start()
-				.then(function () {
-					return isSeleniumStarted(tunnel.port, tunnel.hostname);
-				});
-		},
-
-		'shuts down a running selenium': function () {
-			return tunnel.stop()
-				.then(function () {
-					return isSeleniumStarted()
-						.then(function () {
-							throw new Error('tunnel is still running');
-						}, function () {
-							return true;
-						});
-				});
-		}
+		return tunnel.start().then(function () {
+			tunnel.stop();
+		});
 	}
 });

@@ -1,7 +1,7 @@
-import * as registerSuite from 'intern!object';
 import * as assert from 'intern/chai!assert';
 import Tunnel from 'src/Tunnel';
 import Test = require('intern/lib/Test');
+import registerSuite = require('intern!object');
 
 let tunnel: Tunnel;
 
@@ -10,7 +10,7 @@ registerSuite({
 		tunnel = new Tunnel({ foo: 'bar' });
 	},
 
-	'#clientUrl': function () {
+	'#clientUrl'() {
 		tunnel.port = '4446';
 		tunnel.hostname = 'foo.com';
 		tunnel.protocol = 'https';
@@ -18,7 +18,7 @@ registerSuite({
 		assert.strictEqual(tunnel.clientUrl, 'https://foo.com:4446/bar/baz/');
 	},
 
-	'#extraCapabilities': function () {
+	'#extraCapabilities'() {
 		assert.deepEqual(tunnel.extraCapabilities, {});
 	},
 
@@ -61,7 +61,7 @@ registerSuite({
 		}
 	},
 
-	'#sendJobState': function (this: Test) {
+	'#sendJobState'(this: Test) {
 		const dfd = this.async();
 		tunnel.sendJobState('jobId', null).then(() => dfd.reject(new Error('expected exception')), dfd.resolve);
 	}

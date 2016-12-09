@@ -9,30 +9,32 @@
   "license": "BSD-3-Clause",
   "dependencies": {
     "decompress": "4.0.0",
-    "dojo": "^2.0.0-alpha.7",
-    "mkdirp": "^0.5.1"
+    "dojo": "2.0.0-alpha.7",
+    "mkdirp": "0.5.1"
   },
   "devDependencies": {
-    "@types/chai": "^3.4.34",
-    "@types/es6-promise": "0.0.32",
-    "@types/mkdirp": "^0.3.29",
-    "@types/node": "^6.0.48",
-    "@types/sinon": "^1.16.32",
-    "dojo-loader": "^2.0.0-beta.7",
-    "intern": "3.4.1",
-    "shelljs": "^0.7.5",
-    "sinon": "^1.17.6",
-    "tslint": "^4.0.1",
-    "typescript": "^2.0.10"
+    "@types/chai": "~3.4.34",
+    "@types/es6-promise": "~0.0.32",
+    "@types/mkdirp": "~0.3.29",
+    "@types/node": "~6.0.48",
+    "@types/shelljs": "~0.3.32",
+    "@types/sinon": "~1.16.32",
+    "dojo-loader": "2.0.0-beta.7",
+    "intern": "~3.4.1",
+    "shelljs": "~0.7.5",
+    "sinon": "1.17.6",
+    "ts-node": "~1.7.0",
+    "tslint": "~4.0.0",
+    "typescript": "~2.1.0"
   },
   "scripts": {
-    "clean": "./scripts/clean.js",
-    "build": "./scripts/build.js",
-    "test": "./scripts/test.js",
-    "dist": "./scripts/dist.js",
-    "release": "./scripts/release.js",
-    "lint": "./scripts/lint.js",
-    "ci": "npm run lint && npm run build && npm test"
+    "build": "ts-node ./support/build.ts",
+    "ci": "npm run lint && npm run build && npm test",
+    "clean": "ts-node ./support/clean.ts",
+    "dist": "ts-node ./support/dist.ts",
+    "lint": "ts-node ./support/lint.ts",
+    "release": "ts-node ./support/release.ts",
+    "test": "ts-node ./support/test.ts"
   },
   "bugs": "https://github.com/theintern/digdug/issues",
   "keywords": [

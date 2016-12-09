@@ -27,12 +27,6 @@ export interface BrowserStackEnvironment {
  * @extends module:digdug/Tunnel
  */
 export default class BrowserStackTunnel extends Tunnel {
-	constructor(kwArgs?: TunnelOptions) {
-		super(mixin({
-			servers: []
-		}, kwArgs));
-	}
-
 	/**
 	 * The BrowserStack access key. This will be initialized with the value of the `BROWSERSTACK_ACCESS_KEY`
 	 * environment variable.
@@ -91,7 +85,7 @@ export default class BrowserStackTunnel extends Tunnel {
 	 * @type {boolean}
 	 * @default
 	 */
-	skipServerValidation: boolean = true;
+	skipServerValidation = true;
 
 	/**
 	 * The BrowserStack username. This will be initialized with the value of the `BROWSERSTACK_USERNAME`
@@ -102,16 +96,22 @@ export default class BrowserStackTunnel extends Tunnel {
 	 */
 	username: string;
 
-	get auth(): string {
-		return `${ this.username }:${ this.accessKey }`;
+	constructor(kwArgs?: TunnelOptions) {
+		super(mixin({
+			servers: []
+		}, kwArgs));
 	}
 
-	get executable(): string {
+	get auth() {
+		return `${this.username}:${this.accessKey}`;
+	}
+
+	get executable() {
 		const extension = this.platform === 'win32' ? '.exe' : '';
-		return `./BrowserStackLocal${ extension }`;
+		return `./BrowserStackLocal${extension}`;
 	}
 
-	get extraCapabilities(): Object {
+	get extraCapabilities() {
 		const capabilities: { [ key: string ]: string } = {
 			'browserstack.local': 'true'
 		};
@@ -123,22 +123,22 @@ export default class BrowserStackTunnel extends Tunnel {
 		return capabilities;
 	}
 
-	get url(): string {
+	get url() {
 		const platform = this.platform;
 		const architecture = this.architecture;
 		let url = 'https://www.browserstack.com/browserstack-local/BrowserStackLocal-';
 
 		if (platform === 'darwin' && architecture === 'x64') {
-			url += `${ platform }-${ architecture }`;
+			url += `${platform}-${architecture}`;
 		}
 		else if (platform === 'win32') {
 			url += platform;
 		}
 		else if (platform === 'linux' && (architecture === 'ia32' || architecture === 'x64')) {
-			url += `${ platform }-${ architecture }`;
+			url += `${platform}-${architecture}`;
 		}
 		else {
-			throw new Error(`${ platform }  on  ${ architecture } is not supported`);
+			throw new Error(`${platform} on ${architecture} is not supported`);
 		}
 
 		url += '.zip';
@@ -156,10 +156,10 @@ export default class BrowserStackTunnel extends Tunnel {
 	protected _makeArgs (): string[] {
 		const args: string[] = [
 			this.accessKey,
-			String(this.servers.map(function (server) {
+			this.servers.map(function (server) {
 				const serverUrl = (typeof server === 'string') ? parseUrl(server) : server;
 				return [ serverUrl.hostname, serverUrl.port, serverUrl.protocol === 'https:' ? 1 : 0 ].join(',');
-			}))
+			}).join(',')
 		];
 
 		this.automateOnly && args.push('-onlyAutomate');
@@ -203,7 +203,7 @@ export default class BrowserStackTunnel extends Tunnel {
 		return request.put(`https://www.browserstack.com/automate/sessions/${jobId }.json`, options)
 			.then(function (response: IResponse) {
 				if (response.statusCode < 200 || response.statusCode >= 300) {
-					throw new Error(response.data || `Server reported ${ response.statusCode } with no other data.`);
+					throw new Error(response.data || `Server reported ${response.statusCode} with no other data.`);
 				}
 			});
 	}
@@ -218,7 +218,7 @@ export default class BrowserStackTunnel extends Tunnel {
 				const error = /\s*\*\*\* Error: (.*)$/m.exec(chunk);
 				if (error) {
 					handle.remove();
-					dfd.reject(new Error(`The tunnel reported: ${ error[1] }`));
+					dfd.reject(new Error(`The tunnel reported: ${error[1]}`));
 				}
 				else if (chunk.indexOf('You can now access your local server(s) in our remote browser') > -1) {
 					handle.remove();
@@ -241,7 +241,7 @@ export default class BrowserStackTunnel extends Tunnel {
 	}
 
 	protected _stop() {
-		return new Promise((resolve) => {
+		return new Promise(resolve => {
 			const childProcess = this._process;
 			let exited = false;
 

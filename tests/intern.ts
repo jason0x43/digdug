@@ -6,8 +6,8 @@ export const maxConcurrency = 3;
 
 export const loaderOptions = {
 	packages: [
-		{ name: 'src', location: './dist/src' },
-		{ name: 'tests', location: './dist/tests' },
+		{ name: 'src', location: './_build/src' },
+		{ name: 'tests', location: './_build/tests' },
 		{ name: 'sinon', location: './node_modules/sinon/pkg', main: 'sinon' }
 	]
 };
@@ -25,4 +25,4 @@ export const suites = [
 ];
 
 export const functionalSuites: string[] = [];
-export const excludeInstrumentation = /^(?:dist\/tests|node_modules)\//;
+export const excludeInstrumentation = /^(?:_build\/tests|node_modules)\//;

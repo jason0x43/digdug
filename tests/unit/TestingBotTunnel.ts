@@ -1,12 +1,16 @@
-import * as registerSuite from 'intern!object';
 import * as assert from 'intern/chai!assert';
 import TestingBotTunnel from 'src/TestingBotTunnel';
+import registerSuite = require('intern!object');
 
 let tunnel: TestingBotTunnel;
 
 registerSuite({
-	beforeEach: function () {
+	beforeEach() {
 		tunnel = new TestingBotTunnel();
+	},
+
+	afterEach() {
+		tunnel = null;
 	},
 
 	'#auth'() {

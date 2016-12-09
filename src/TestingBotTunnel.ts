@@ -2,7 +2,7 @@
  * @module digdug/TestingBotTunnel
  */
 
-import Tunnel, { NormalizedEnvironment, TunnelOptions, ChildDescriptor } from './Tunnel';
+import Tunnel, { TunnelOptions, ChildDescriptor } from './Tunnel';
 import { mixin, on } from './util';
 import { join as joinPath } from 'path';
 import { parse as parseUrl } from 'url';
@@ -21,12 +21,6 @@ export interface TestingBotEnvironment {
 }
 
 export default class TestingBotTunnel extends Tunnel {
-	constructor(kwArgs?: TunnelOptions) {
-		super(mixin({
-			fastFailDomains: []
-		}, kwArgs));
-	}
-
 	/**
 	 * The TestingBot API key.
 	 *
@@ -95,15 +89,21 @@ export default class TestingBotTunnel extends Tunnel {
 	 */
 	environmentUrl: string;
 
+	constructor(kwArgs?: TunnelOptions) {
+		super(mixin({
+			fastFailDomains: []
+		}, kwArgs));
+	}
+
 	get auth() {
-		return `${ this.apiKey }:${ this.apiSecret }`;
+		return `${this.apiKey}:${this.apiSecret}`;
 	}
 
 	get isDownloaded() {
 		return existsSync(joinPath(this.directory, 'testingbot-tunnel/testingbot-tunnel.jar'));
 	}
 
-	_makeArgs(readyFile: string): string[] {
+	_makeArgs(readyFile: string) {
 		const args = [
 			'-jar', 'testingbot-tunnel/testingbot-tunnel.jar',
 			this.apiKey,
@@ -175,7 +175,7 @@ export default class TestingBotTunnel extends Tunnel {
 	}
 
 	_start(): ChildDescriptor {
-		const readyFile = joinPath(tmpdir(), `testingbot-${ Date.now() }`);
+		const readyFile = joinPath(tmpdir(), `testingbot-${Date.now()}`);
 		const child = this._makeChild(readyFile);
 		const { process: childProcess, deferred: dfd } = child;
 		let lastMessage: string;
@@ -194,7 +194,7 @@ export default class TestingBotTunnel extends Tunnel {
 
 		this._handles.push(
 			on(childProcess.stderr, 'data', (data: string | Buffer) => {
-				String(data).split('\n').forEach((message) => {
+				String(data).split('\n').forEach(message => {
 					if (message.indexOf('INFO: ') === 0) {
 						message = message.slice('INFO: '.length);
 						// the tunnel produces a lot of repeating messages during setup when the status is pending;
@@ -231,7 +231,7 @@ export default class TestingBotTunnel extends Tunnel {
 	 * @returns a normalized descriptor
 	 * @private
 	 */
-	_normalizeEnvironment(environment: TestingBotEnvironment): NormalizedEnvironment {
+	_normalizeEnvironment(environment: TestingBotEnvironment) {
 		const browserMap: { [ key: string ]: string } = {
 			googlechrome: 'chrome',
 			iexplore: 'internet explorer'

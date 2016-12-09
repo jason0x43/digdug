@@ -9,9 +9,9 @@ import { Handle } from './interfaces';
  * @param {...Object} sources The source object from which properties are taken.
  * @returns {Object} The target object.
  */
-export function mixin<T>(target: Object, ... sources: Object[]): T;
-export function mixin<T, U>(target: Object, ... sources: Object[]): U;
-export function mixin(target: Object, ... sources: Object[]): Object {
+export function mixin<T>(target: Object, ...sources: Object[]): T;
+export function mixin<T, U>(target: Object, ...sources: Object[]): U;
+export function mixin(target: Object, ...sources: Object[]): Object {
 	for (let i = 0; i < sources.length; i++) {
 		const source = sources[i];
 
@@ -41,5 +41,5 @@ export function on(emitter: EventEmitter, event: string, listener: EventListener
 			this.remove = function () { };
 			emitter.removeListener(event, listener);
 		}
-	}
+	};
 }

@@ -1,7 +1,6 @@
-node_modules
-saucelabs
-testingbot
-browserstack
-selenium-standalone
-build
-dist
+node_modules/
+saucelabs/
+testingbot/
+browserstack/
+selenium-standalone/
+_build/

@@ -44,7 +44,7 @@ export interface JobState {
 }
 
 export interface KwArgs {
-	[ key: string ]: any;
+	[key: string]: any;
 }
 
 export interface Listener<EventType> {

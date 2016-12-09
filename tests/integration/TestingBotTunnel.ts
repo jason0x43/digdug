@@ -1,5 +1,6 @@
 import * as registerSuite from 'intern!object';
 import * as assert from 'intern/chai!assert';
+import { cleanup } from '../support/cleanup';
 import TestingBotTunnel from 'src/TestingBotTunnel';
 import createCommonTests from './common';
 import tunnelTest from '../support/tunnelTest';
@@ -7,6 +8,14 @@ import Test = require('intern/lib/Test');
 
 registerSuite({
 	name: 'integration/TestingBotTunnel',
+
+	setup() {
+		return cleanup(new TestingBotTunnel());
+	},
+
+	teardown() {
+		return cleanup(new TestingBotTunnel());
+	},
 
 	'common tests': createCommonTests({
 		tunnelClass: TestingBotTunnel,
