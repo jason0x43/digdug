@@ -75,6 +75,7 @@ export interface NormalizedEnvironment {
 	platformName?: string;
 	platformVersion?: string;
 	version: string;
+	[key: string]: any;
 }
 
 /**
