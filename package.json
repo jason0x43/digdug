@@ -17,24 +17,21 @@
     "@types/es6-promise": "~0.0.32",
     "@types/mkdirp": "~0.3.29",
     "@types/node": "~6.0.48",
-    "@types/shelljs": "~0.3.32",
     "@types/sinon": "~1.16.32",
     "dojo-loader": "2.0.0-beta.7",
     "intern": "~3.4.1",
-    "shelljs": "~0.7.5",
     "sinon": "1.17.6",
-    "ts-node": "~1.7.0",
-    "tslint": "~4.0.0",
-    "typescript": "~2.1.0"
+    "typescript": "~2.1.0",
+    "intern-dev": "https://github.com/jason0x43/intern-dev/releases/download/0.1.0-pre/intern-dev-0.1.0-pre.tgz"
   },
   "scripts": {
-    "build": "ts-node ./support/build.ts",
-    "ci": "npm run lint && npm run build && npm test",
-    "clean": "ts-node ./support/clean.ts",
-    "dist": "ts-node ./support/dist.ts",
-    "lint": "ts-node ./support/lint.ts",
-    "release": "ts-node ./support/release.ts",
-    "test": "ts-node ./support/test.ts"
+    "build": "intern-dev-clean && intern-dev-build",
+    "ci": "intern-dev-lint && intern-dev-build && intern-dev-test",
+    "clean": "intern-dev-clean",
+    "dist": "intern-dev-clean && npm run ci",
+    "lint": "intern-dev-lint",
+    "release": "intern-dev-release",
+    "test": "intern-dev-test"
   },
   "bugs": "https://github.com/theintern/digdug/issues",
   "keywords": [
