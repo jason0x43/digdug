@@ -1,9 +1,8 @@
 import tunnelTest from '../support/tunnelTest';
-import NullTunnel from 'src/NullTunnel';
+import NullTunnel from '../../src/NullTunnel';
 import Test = require('intern/lib/Test');
-import registerSuite = require('intern!object');
 
-registerSuite({
+const suite = {
 	'#start'(this: Test) {
 		const tunnel = new NullTunnel();
 
@@ -11,4 +10,6 @@ registerSuite({
 			return /Could not get tunnel info/.test(error.message);
 		});
 	}
-});
+};
+
+export default suite;

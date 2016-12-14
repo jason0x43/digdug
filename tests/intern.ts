@@ -6,23 +6,29 @@ export const maxConcurrency = 3;
 
 export const loaderOptions = {
 	packages: [
-		{ name: 'src', location: './_build/src' },
 		{ name: 'tests', location: './_build/tests' },
 		{ name: 'sinon', location: './node_modules/sinon/pkg', main: 'sinon' }
 	]
 };
 
 export const loaders = {
-	'host-browser': 'node_modules/dojo-loader/loader.js',
 	'host-node': 'dojo-loader'
 };
 
 export const reporters = [ 'Console' ];
 
 export const suites = [
-	'dojo/has!host-node?tests/unit/all',
-	'dojo/has!host-node?tests/integration/all'
+	'tests/nodeSuite!unit/BrowserStackTunnel',
+	'tests/nodeSuite!unit/SauceLabsTunnel',
+	'tests/nodeSuite!unit/TestingBotTunnel',
+	'tests/nodeSuite!unit/Tunnel',
+	'tests/nodeSuite!unit/util',
+
+	'tests/nodeSuite!integration/BrowserStackTunnel',
+	'tests/nodeSuite!integration/NullTunnel',
+	'tests/nodeSuite!integration/SauceLabsTunnel',
+	'tests/nodeSuite!integration/SeleniumTunnel',
+	'tests/nodeSuite!integration/TestingBotTunnel'
 ];
 
-export const functionalSuites: string[] = [];
 export const excludeInstrumentation = /^(?:_build\/tests|node_modules)\//;

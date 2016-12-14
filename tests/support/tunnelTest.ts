@@ -1,6 +1,9 @@
-import { args } from 'intern';
+import args from './args';
 import { Deferred } from 'dojo/Promise';
-import Tunnel from 'src/Tunnel';
+import Tunnel from '../../src/Tunnel';
+import Promise = require('dojo/Promise');
+
+export { Promise };
 
 function nocheck() {
 	return false;

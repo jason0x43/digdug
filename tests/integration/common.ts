@@ -1,5 +1,5 @@
-import * as assert from 'intern/chai!assert';
-import Tunnel, { NormalizedEnvironment } from 'src/Tunnel';
+import { assert } from 'chai';
+import Tunnel, { NormalizedEnvironment } from '../../src/Tunnel';
 import { inspect } from 'util';
 import Test = require('intern/lib/Test');
 

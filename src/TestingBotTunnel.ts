@@ -12,6 +12,7 @@ import { watchFile, unwatchFile, existsSync } from 'fs';
 import { JobState } from './interfaces';
 import ioQuery = require('dojo/io-query');
 import request = require('dojo/request');
+import Promise = require('dojo/Promise');
 
 export interface TestingBotEnvironment {
 	selenium_name: string;

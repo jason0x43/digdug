@@ -1,17 +1,17 @@
-import * as assert from 'intern/chai!assert';
-import { args } from 'intern';
-import SeleniumTunnel, { DriverFile } from 'src/SeleniumTunnel';
-import ChromeConfig from 'src/configs/ChromeConfig';
-import IeConfig from 'src/configs/IeConfig';
-import FirefoxConfig from 'src/configs/FirefoxConfig';
+import { assert } from 'chai';
+import args from '../support/args';
+import SeleniumTunnel, { DriverFile } from '../../src/SeleniumTunnel';
+import ChromeConfig from '../../src/configs/ChromeConfig';
+import IeConfig from '../../src/configs/IeConfig';
+import FirefoxConfig from '../../src/configs/FirefoxConfig';
 import { readdirSync } from 'fs';
 import { cleanup, deleteTunnelFiles } from '../support/cleanup';
-import SeleniumConfig from 'src/configs/SeleniumConfig';
+import SeleniumConfig from '../../src/configs/SeleniumConfig';
 import checkRemote from '../support/checkRemote';
-import Tunnel from 'src/Tunnel';
+import Tunnel from '../../src/Tunnel';
 import tunnelTest from '../support/tunnelTest';
 import Test = require('intern/lib/Test');
-import registerSuite = require('intern!object');
+import DojoPromise = require('dojo/Promise');
 
 const PORT = '4445';
 let tunnel: SeleniumTunnel;
@@ -77,7 +77,7 @@ function instrumentTunnel(tunnel: Tunnel) {
 	});
 }
 
-function assertDownload(config = {}) {
+function assertDownload(config = {}): DojoPromise<any> {
 	tunnel = new SeleniumTunnel(config);
 	const expected = tunnel['_getConfigs']().map(function (config) {
 		return config.executable;
@@ -96,7 +96,7 @@ function assertDownload(config = {}) {
 	});
 }
 
-registerSuite({
+const suite = {
 	name: 'integration/SeleniumTunnel',
 
 	setup() {
@@ -111,7 +111,6 @@ registerSuite({
 		const tests = {
 			'selenium standalone': function () {
 				const config = new SeleniumConfig();
-
 				return checkRemote(config.url);
 			}
 		};
@@ -179,4 +178,6 @@ registerSuite({
 			tunnel.stop();
 		});
 	}
-});
+};
+
+export default suite;

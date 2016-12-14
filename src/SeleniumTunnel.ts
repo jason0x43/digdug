@@ -150,7 +150,7 @@ export default class SeleniumTunnel extends Tunnel {
 			const path = joinPath(this.directory, executable);
 
 			if (existsSync(path)) {
-				return DojoPromise.resolve(null);
+				return Promise.resolve(null);
 			}
 
 			const options: DownloadOptions = <any> mixin({}, SeleniumTunnel.prototype, this, {
@@ -167,7 +167,7 @@ export default class SeleniumTunnel extends Tunnel {
 
 	sendJobState() {
 		// This is a noop for Selenium
-		return Promise.resolve<void>();
+		return Promise.resolve(undefined);
 	}
 
 	private _getConfigs() {
@@ -220,7 +220,7 @@ export default class SeleniumTunnel extends Tunnel {
 		return args;
 	}
 
-	protected _postDownload(response: IResponse, options: MultifileDownloadOptions) {
+	protected _postDownload(response: IResponse, options: MultifileDownloadOptions): Promise<any> {
 		this.emit('postdownload', options.url);
 		if (options.dontExtract) {
 			return this._writeFile(response.data, options);

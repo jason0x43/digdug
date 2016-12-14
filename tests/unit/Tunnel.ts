@@ -1,12 +1,11 @@
-import * as assert from 'intern/chai!assert';
-import Tunnel from 'src/Tunnel';
+import { assert } from 'chai';
+import Tunnel from '../../src/Tunnel';
 import DojoPromise = require('dojo/Promise');
 import Test = require('intern/lib/Test');
-import registerSuite = require('intern!object');
 
 let tunnel: Tunnel;
 
-registerSuite({
+const suite = {
 	beforeEach: function () {
 		tunnel = new Tunnel({ foo: 'bar' });
 	},
@@ -65,6 +64,11 @@ registerSuite({
 
 	'#sendJobState'(this: Test) {
 		const dfd = this.async();
-		tunnel.sendJobState('jobId', null).then(() => dfd.reject(new Error('expected exception')), dfd.resolve);
+		tunnel.sendJobState('jobId', null).then(
+			() => dfd.reject(new Error('expected exception')),
+			() => dfd.resolve()
+		);
 	}
-});
+};
+
+export default suite;

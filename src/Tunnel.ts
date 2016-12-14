@@ -2,9 +2,6 @@
  * @module digdug/Tunnel
  */
 
-import DojoPromise = require('dojo/Promise');
-import decompress = require('decompress');
-import Evented = require('dojo/Evented');
 import { mixin, on } from './util';
 import { format as formatUrl, Url } from 'url';
 import { existsSync } from 'fs';
@@ -14,6 +11,9 @@ import { IRequestError, IResponse } from 'dojo/request';
 import { spawn, ChildProcess } from 'child_process';
 import { Deferred } from 'dojo/Promise';
 import { Handle, JobState } from './interfaces';
+import DojoPromise = require('dojo/Promise');
+import decompress = require('decompress');
+import Evented = require('dojo/Evented');
 
 // TODO: Spawned processes are not getting cleaned up if there is a crash
 
@@ -431,7 +431,7 @@ export default class Tunnel extends Evented implements Url, DownloadOptions {
 	 * @param {JobState} data Data to send to the tunnel provider about the job.
 	 * @returns {Promise.<void>} A promise that resolves once the job state request is complete.
 	 */
-	sendJobState(_jobId: string, _data: JobState): Promise<void> {
+	sendJobState(_jobId: string, _data: JobState): Promise<any> {
 		return Promise.reject(new Error('Job state is not supported by this tunnel.'));
 	}
 

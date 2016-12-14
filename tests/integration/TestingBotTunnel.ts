@@ -1,12 +1,11 @@
-import * as registerSuite from 'intern!object';
-import * as assert from 'intern/chai!assert';
+import { assert } from 'chai';
 import { cleanup } from '../support/cleanup';
-import TestingBotTunnel from 'src/TestingBotTunnel';
+import TestingBotTunnel from '../../src/TestingBotTunnel';
 import createCommonTests from './common';
 import tunnelTest from '../support/tunnelTest';
 import Test = require('intern/lib/Test');
 
-registerSuite({
+const suite = {
 	name: 'integration/TestingBotTunnel',
 
 	setup() {
@@ -39,4 +38,6 @@ registerSuite({
 			return /Could not get tunnel info/.test(error.message);
 		});
 	}
-});
+};
+
+export default suite;

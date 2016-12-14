@@ -1,11 +1,10 @@
-import * as assert from 'intern/chai!assert';
-import BrowserStackTunnel from 'src/BrowserStackTunnel';
+import { assert } from 'chai';
+import BrowserStackTunnel from '../../src/BrowserStackTunnel';
 import { cleanup } from '../support/cleanup';
-import registerSuite = require('intern!object');
 
 let tunnel: BrowserStackTunnel;
 
-registerSuite({
+const suite = {
 	beforeEach: function () {
 		tunnel = new BrowserStackTunnel();
 	},
@@ -80,4 +79,6 @@ registerSuite({
 			}
 		};
 	})()
-});
+};
+
+export default suite;

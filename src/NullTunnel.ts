@@ -2,7 +2,7 @@
  * @module digdug/NullTunnel
  */
 
-import Tunnel from './Tunnel';
+import Tunnel, { ChildDescriptor } from './Tunnel';
 import { mixin } from './util';
 import DojoPromise = require('dojo/Promise');
 
@@ -17,7 +17,7 @@ export default class NullTunnel extends Tunnel {
 		return DojoPromise.resolve(null);
 	}
 
-	start() {
+	start(): DojoPromise<ChildDescriptor> {
 		this.isRunning = false;
 		return DojoPromise.resolve(null);
 	}
@@ -28,7 +28,7 @@ export default class NullTunnel extends Tunnel {
 	}
 
 	sendJobState() {
-		return Promise.resolve<void>();
+		return Promise.resolve();
 	}
 }
 

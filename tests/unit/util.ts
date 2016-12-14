@@ -1,10 +1,9 @@
-import * as assert from 'intern/chai!assert';
+import { assert } from 'chai';
 import * as sinon from 'sinon';
-import { mixin, on } from 'src/util';
+import { mixin, on } from '../../src/util';
 import { EventEmitter } from 'events';
-import registerSuite = require('intern!object');
 
-registerSuite({
+const suite = {
 	mixin: {
 		'target is null'() {
 			const actual = mixin(null);
@@ -106,4 +105,6 @@ registerSuite({
 			assert.isFalse(listener.called);
 		}
 	}
-});
+};
+
+export default suite;

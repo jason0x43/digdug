@@ -1,12 +1,11 @@
-import * as assert from 'intern/chai!assert';
+import { assert } from 'chai';
 import { cleanup } from '../support/cleanup';
 import createCommonTests from './common';
-import SauceLabsTunnel from 'src/SauceLabsTunnel';
+import SauceLabsTunnel from '../../src/SauceLabsTunnel';
 import tunnelTest from '../support/tunnelTest';
 import Test = require('intern/lib/Test');
-import registerSuite = require('intern!object');
 
-registerSuite({
+const suite = {
 	name: 'integration/SauceLabsTunnel',
 
 	setup: function () {
@@ -38,4 +37,6 @@ registerSuite({
 			return /Not authorized/.test(error.message);
 		});
 	}
-});
+};
+
+export default suite;
