@@ -1,9 +1,10 @@
 import { assert } from 'chai';
-import TestingBotTunnel from '../../src/TestingBotTunnel';
+import TestingBotTunnel from 'src/TestingBotTunnel';
+import registerSuite = require('intern!object');
 
 let tunnel: TestingBotTunnel;
 
-const suite = {
+registerSuite({
 	beforeEach() {
 		tunnel = new TestingBotTunnel();
 	},
@@ -17,6 +18,4 @@ const suite = {
 		tunnel.apiSecret = 'bar';
 		assert.equal(tunnel.auth, 'foo:bar');
 	}
-};
-
-export default suite;
+});

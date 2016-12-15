@@ -1,7 +1,7 @@
 import args from './args';
 import { existsSync, readdirSync, lstatSync, unlinkSync, rmdirSync } from 'fs';
 import { join as joinPath } from 'path';
-import Tunnel from '../../src/Tunnel';
+import Tunnel from 'src/Tunnel';
 /**
  * Deletes the directory used by the tunnel
  * @param tunnel

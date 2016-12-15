@@ -1,10 +1,11 @@
 import { assert } from 'chai';
 import { cleanup } from '../support/cleanup';
-import SauceLabsTunnel from '../../src/SauceLabsTunnel';
+import SauceLabsTunnel from 'src/SauceLabsTunnel';
+import registerSuite = require('intern!object');
 
 let tunnel: SauceLabsTunnel;
 
-const suite = {
+registerSuite({
 	name: 'unit/SauceLabsTunnel',
 
 	afterEach() {
@@ -87,6 +88,4 @@ const suite = {
 			assert.match(tunnel.url, url);
 		}
 	}
-};
-
-export default suite;
+});

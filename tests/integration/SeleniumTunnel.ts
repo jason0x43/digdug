@@ -1,17 +1,18 @@
 import { assert } from 'chai';
 import args from '../support/args';
-import SeleniumTunnel, { DriverFile } from '../../src/SeleniumTunnel';
-import ChromeConfig from '../../src/configs/ChromeConfig';
-import IeConfig from '../../src/configs/IeConfig';
-import FirefoxConfig from '../../src/configs/FirefoxConfig';
+import SeleniumTunnel, { DriverFile } from 'src/SeleniumTunnel';
+import ChromeConfig from 'src/configs/ChromeConfig';
+import IeConfig from 'src/configs/IeConfig';
+import FirefoxConfig from 'src/configs/FirefoxConfig';
 import { readdirSync } from 'fs';
 import { cleanup, deleteTunnelFiles } from '../support/cleanup';
-import SeleniumConfig from '../../src/configs/SeleniumConfig';
+import SeleniumConfig from 'src/configs/SeleniumConfig';
 import checkRemote from '../support/checkRemote';
-import Tunnel from '../../src/Tunnel';
+import Tunnel from 'src/Tunnel';
 import tunnelTest from '../support/tunnelTest';
 import Test = require('intern/lib/Test');
 import DojoPromise = require('dojo/Promise');
+import registerSuite = require('intern!object');
 
 const PORT = '4445';
 let tunnel: SeleniumTunnel;
@@ -96,7 +97,7 @@ function assertDownload(config = {}): DojoPromise<any> {
 	});
 }
 
-const suite = {
+registerSuite({
 	name: 'integration/SeleniumTunnel',
 
 	setup() {
@@ -178,6 +179,4 @@ const suite = {
 			tunnel.stop();
 		});
 	}
-};
-
-export default suite;
+});

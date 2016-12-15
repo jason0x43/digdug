@@ -1,9 +1,9 @@
 import { assert } from 'chai';
-import * as sinon from 'sinon';
-import { mixin, on } from '../../src/util';
+import { mixin, on } from 'src/util';
 import { EventEmitter } from 'events';
+import registerSuite = require('intern!object');
 
-const suite = {
+registerSuite({
 	mixin: {
 		'target is null'() {
 			const actual = mixin(null);
@@ -87,24 +87,24 @@ const suite = {
 		'attach to an event'() {
 			const emitter = new EventEmitter();
 			const event = 'test';
-			const listener = sinon.stub();
+			let count = 0;
+			const listener = () => count++;
 
 			on(emitter, event, listener);
 			emitter.emit(event, 'hello');
-			assert.isTrue(listener.calledOnce);
+			assert.strictEqual(count, 1, 'expected listener to be called once');
 		},
 
 		'remove listener with handle'() {
 			const emitter = new EventEmitter();
 			const event = 'test';
-			const listener = sinon.stub();
+			let called = false;
+			const listener = () => called = true;
 
 			const handle = on(emitter, event, listener);
 			handle.remove();
 			emitter.emit(event, 'hello');
-			assert.isFalse(listener.called);
+			assert.isFalse(called, 'listener should not have been called');
 		}
 	}
-};
-
-export default suite;
+});

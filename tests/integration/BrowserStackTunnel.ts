@@ -1,12 +1,13 @@
 import { assert } from 'chai';
 import createCommonTests from './common';
 import { cleanup } from '../support/cleanup';
-import BrowserStackTunnel from '../../src/BrowserStackTunnel';
-import Tunnel, { NormalizedEnvironment } from '../../src/Tunnel';
+import BrowserStackTunnel from 'src/BrowserStackTunnel';
+import Tunnel, { NormalizedEnvironment } from 'src/Tunnel';
 import tunnelTest from '../support/tunnelTest';
 import Test = require('intern/lib/Test');
+import registerSuite = require('intern!object');
 
-const suite = {
+registerSuite({
 	name: 'integration/BrowserStackTunnel',
 
 	setup: function () {
@@ -47,6 +48,4 @@ const suite = {
 			return /The tunnel reported:/.test(error.message);
 		});
 	}
-};
-
-export default suite;
+});

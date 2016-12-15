@@ -1,11 +1,12 @@
 import { assert } from 'chai';
-import Tunnel from '../../src/Tunnel';
+import Tunnel from 'src/Tunnel';
 import DojoPromise = require('dojo/Promise');
 import Test = require('intern/lib/Test');
+import registerSuite = require('intern!object');
 
 let tunnel: Tunnel;
 
-const suite = {
+registerSuite({
 	beforeEach: function () {
 		tunnel = new Tunnel({ foo: 'bar' });
 	},
@@ -69,6 +70,4 @@ const suite = {
 			() => dfd.resolve()
 		);
 	}
-};
-
-export default suite;
+});

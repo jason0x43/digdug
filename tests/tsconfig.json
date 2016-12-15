@@ -1,6 +1,14 @@
 {
   "compilerOptions": {
-    "module": "umd"
+    "module": "umd",
+    "baseUrl": "..",
+    "module": "umd",
+    "paths": {
+      "src/*": [
+        "./_build/src/*",
+        "./src/*"
+      ]
+    }
   },
   "extends": "../tsconfig.json",
   "files": [
