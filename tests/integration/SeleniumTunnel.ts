@@ -9,7 +9,10 @@ import Test = require('intern/lib/Test');
 
 function createDownloadTest(config: any) {
 	return function () {
-		tunnel = new SeleniumTunnel(config || {});
+		tunnel = new SeleniumTunnel();
+		Object.keys(config).forEach(key => {
+			Object.defineProperty(tunnel, key, { value: config[key] });
+		});
 
 		const expected = (<any> tunnel)._getDriverConfigs().map(function (config: DriverFile) {
 			return config.executable;

@@ -1,44 +1,23 @@
-/**
- * @module digdug/TestingBotTunnel
- */
-
 import Tunnel, { TunnelProperties, ChildExecutor, NormalizedEnvironment, StatusEvent } from './Tunnel';
-
-import * as fs from 'fs';
+import { watchFile, unwatchFile } from 'fs';
 import UrlSearchParams from 'dojo-core/UrlSearchParams';
-import * as os from 'os';
-import * as pathUtil from 'path';
+import { tmpdir } from 'os';
+import { join } from 'path';
 import request from 'dojo-core/request';
 import { NodeRequestOptions } from 'dojo-core/request/node';
-import * as urlUtil from 'url';
-import * as util from './util';
+import { parse } from 'url';
+import { fileExists, on } from './util';
+import { mixin } from 'dojo-core/lang';
 import { JobState } from './interfaces';
 import Task from 'dojo-core/async/Task';
 
-export interface TestingBotProperties extends TunnelProperties {
-	apiKey: string;
-	apiSecret: string;
-	fastFailDomains: string[];
-	logFile: string;
-	useCompression: boolean;
-	useJettyProxy: boolean;
-	useSquidProxy: boolean;
-	useSsl: boolean;
-}
-
-export type TestingBotOptions = Partial<TestingBotProperties>;
-
 /**
  * A TestingBot tunnel.
- *
- * @constructor module:digdug/TestingBotTunnel
- * @extends module:digdug/Tunnel
  */
 export default class TestingBotTunnel extends Tunnel implements TunnelProperties {
 	/**
 	 * The TestingBot API key.
 	 *
-	 * @type {string}
 	 * @default the value of the TESTINGBOT_API_KEY environment variable
 	 */
 	apiKey: string;
@@ -46,7 +25,6 @@ export default class TestingBotTunnel extends Tunnel implements TunnelProperties
 	/**
 	 * The TestingBot API secret.
 	 *
-	 * @type {string}
 	 * @default the value of the TESTINGBOT_API_SECRET environment variable
 	 */
 	apiSecret: string;
@@ -58,62 +36,48 @@ export default class TestingBotTunnel extends Tunnel implements TunnelProperties
 	/**
 	 * A list of regular expressions corresponding to domains whose connections should fail immediately if the VM
 	 * attempts to make a connection to them.
-	 *
-	 * @type {string[]}
 	 */
 	fastFailDomains: string[];
 
-	/**
-	 * A filename where additional logs from the tunnel should be output.
-	 *
-	 * @type {string}
-	 */
+	/** A filename where additional logs from the tunnel should be output. */
 	logFile: string;
 
-	/**
-	 * Whether or not to use rabbIT compression for the tunnel connection.
-	 *
-	 * @type {boolean}
-	 * @default
-	 */
+	/** Whether or not to use rabbIT compression for the tunnel connection. */
 	useCompression: boolean;
 
-	/**
-	 * Whether or not to use the default local Jetty proxy for the tunnel.
-	 *
-	 * @type {boolean}
-	 * @default
-	 */
+	/** Whether or not to use the default local Jetty proxy for the tunnel. */
 	useJettyProxy: boolean;
 
-	/**
-	 * Whether or not to use the default remote Squid proxy for the VM.
-	 *
-	 * @type {boolean}
-	 * @default
-	 */
+	/** Whether or not to use the default remote Squid proxy for the VM. */
 	useSquidProxy: boolean;
 
-	/**
-	 * Whether or not to re-encrypt data encrypted by self-signed certificates.
-	 *
-	 * @type {boolean}
-	 * @default
-	 */
+	/** Whether or not to re-encrypt data encrypted by self-signed certificates. */
 	useSsl: boolean;
+
+	constructor(options?: TestingBotOptions) {
+		super(mixin({
+			apiKey: process.env.TESTINGBOT_KEY,
+			apiSecret: process.env.TESTINGBOT_SECRET,
+			directory: join(__dirname, 'testingbot'),
+			environmentUrl: 'https://api.testingbot.com/v1/browsers',
+			executable: 'java',
+			fastFailDomains: [],
+			logFile: null,
+			port: '4445',
+			url: 'https://testingbot.com/downloads/testingbot-tunnel.zip',
+			useCompression: false,
+			useJettyProxy: true,
+			useSquidProxy: true,
+			useSsl: false
+		}, options));
+	}
 
 	get auth() {
 		return `${this.apiKey || ''}:${this.apiSecret || ''}`;
 	}
 
 	get isDownloaded() {
-		return util.fileExists(pathUtil.join(this.directory, 'testingbot-tunnel/testingbot-tunnel.jar'));
-	}
-
-	constructor(options?: TestingBotOptions) {
-		super(util.assign({
-			fastFailDomains: []
-		}, options));
+		return fileExists(join(this.directory, 'testingbot-tunnel/testingbot-tunnel.jar'));
 	}
 
 	protected _makeArgs(readyFile: string): string[] {
@@ -134,7 +98,7 @@ export default class TestingBotTunnel extends Tunnel implements TunnelProperties
 		this.verbose && args.push('-d');
 
 		if (this.proxy) {
-			const proxy = urlUtil.parse(this.proxy);
+			const proxy = parse(this.proxy);
 
 			proxy.hostname && args.unshift('-Dhttp.proxyHost=', proxy.hostname);
 			proxy.port && args.unshift('-Dhttp.proxyPort=', proxy.port);
@@ -184,24 +148,23 @@ export default class TestingBotTunnel extends Tunnel implements TunnelProperties
 	}
 
 	protected _start(executor: ChildExecutor) {
-		const readyFile = pathUtil.join(os.tmpdir(), 'testingbot-' + Date.now());
+		const readyFile = join(tmpdir(), 'testingbot-' + Date.now());
 
 		return this._makeChild((child, resolve, reject) => {
-
 			// Polling API is used because we are only watching for one file, so efficiency is not a big deal, and the
 			// `fs.watch` API has extra restrictions which are best avoided
-			fs.watchFile(readyFile, { persistent: false, interval: 1007 }, function (current, previous) {
+			watchFile(readyFile, { persistent: false, interval: 1007 }, function (current, previous) {
 				if (Number(current.mtime) === Number(previous.mtime)) {
 					// readyFile hasn't been modified, so ignore the event
 					return;
 				}
 
-				fs.unwatchFile(readyFile);
+				unwatchFile(readyFile);
 				resolve();
 			});
 
 			let lastMessage: string;
-			this._handle = util.on(child.stderr, 'data', (data: string) => {
+			this._handle = on(child.stderr, 'data', (data: string) => {
 				data = String(data);
 				data.split('\n').forEach((message) => {
 					if (message.indexOf('INFO: ') === 0) {
@@ -243,9 +206,8 @@ export default class TestingBotTunnel extends Tunnel implements TunnelProperties
 	 *     "version":"36"
 	 * }
 	 *
-	 * @param {Object} environment a TestingBot environment descriptor
+	 * @param environment a TestingBot environment descriptor
 	 * @returns a normalized descriptor
-	 * @private
 	 */
 	protected _normalizeEnvironment(environment: any): NormalizedEnvironment {
 		const browserMap: any = {
@@ -272,18 +234,15 @@ export default class TestingBotTunnel extends Tunnel implements TunnelProperties
 	}
 }
 
-util.assign(TestingBotTunnel.prototype, <TestingBotOptions> {
-	apiKey: process.env.TESTINGBOT_KEY,
-	apiSecret: process.env.TESTINGBOT_SECRET,
-	directory: pathUtil.join(__dirname, 'testingbot'),
-	executable: 'java',
-	fastFailDomains: null,
-	logFile: null,
-	port: '4445',
-	url: 'https://testingbot.com/downloads/testingbot-tunnel.zip',
-	useCompression: false,
-	useJettyProxy: true,
-	useSquidProxy: true,
-	useSsl: false,
-	environmentUrl: 'https://api.testingbot.com/v1/browsers'
-});
+export interface TestingBotProperties extends TunnelProperties {
+	apiKey: string;
+	apiSecret: string;
+	fastFailDomains: string[];
+	logFile: string;
+	useCompression: boolean;
+	useJettyProxy: boolean;
+	useSquidProxy: boolean;
+	useSsl: boolean;
+}
+
+export type TestingBotOptions = Partial<TestingBotProperties>;

@@ -12,30 +12,17 @@ registerSuite({
 		},
 
 		'config object': function () {
-			const tunnel = new SeleniumTunnel({
-				directory: '.',
-				drivers: [ { name: 'chrome', executable: 'README.md' } ]
-			});
-			Object.defineProperty(tunnel, 'artifact', {
-				value: '.'
-			});
-			assert.isTrue(tunnel.isDownloaded);
-		},
-
-		'definition object': function () {
-			const tunnel = new SeleniumTunnel({
-				directory: '.',
-				drivers: [ <any> { executable: 'README.md' } ]
-			});
-			Object.defineProperty(tunnel, 'artifact', {
-				value: '.'
-			});
+			const tunnel = new SeleniumTunnel({ drivers: [ { executable: 'README.md', url: '', seleniumProperty: '' } ] });
+			Object.defineProperty(tunnel, 'artifact', { value: '.' });
+			Object.defineProperty(tunnel, 'directory', { value: '.' });
 			assert.isTrue(tunnel.isDownloaded);
 		},
 
 		'invalid name': function () {
 			assert.throws(function () {
-				const tunnel = new SeleniumTunnel({ drivers: <any> [ 'foo' ] });
+				const tunnel = new SeleniumTunnel({ drivers: <any>[ 'foo' ] });
+				Object.defineProperty(tunnel, 'artifact', { value: '.' });
+				Object.defineProperty(tunnel, 'directory', { value: '.' });
 				tunnel.isDownloaded;
 			}, /Invalid driver/);
 		},
@@ -43,6 +30,8 @@ registerSuite({
 		'config object with invalid name': function () {
 			assert.throws(function () {
 				const tunnel = new SeleniumTunnel({ drivers: [ { name: 'foo' } ] });
+				Object.defineProperty(tunnel, 'artifact', { value: '.' });
+				Object.defineProperty(tunnel, 'directory', { value: '.' });
 				tunnel.isDownloaded;
 			}, /Invalid driver/);
 		}

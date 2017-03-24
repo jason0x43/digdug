@@ -1,47 +1,20 @@
-/**
- * @module digdug/SauceLabsTunnel
- */
-
 import Tunnel, { TunnelProperties, DownloadOptions, ChildExecutor, NormalizedEnvironment, StatusEvent } from './Tunnel';
-
 import { JobState } from './interfaces';
-import * as fs from 'fs';
-import * as os from 'os';
-import * as pathUtil from 'path';
+import { chmodSync, watchFile, unwatchFile } from 'fs';
+import { tmpdir } from 'os';
+import { join } from 'path';
 import Task, { State } from 'dojo-core/async/Task';
 import request, { Response } from 'dojo-core/request';
 import { NodeRequestOptions } from 'dojo-core/request/node';
 import { format as formatUrl, parse as parseUrl, Url } from 'url';
-import * as util from './util';
+import { mixin } from 'dojo-core/lang';
+import { fileExists, on } from './util';
 
-const SC_VERSION = '4.4.1';
+const scVersion = '4.4.5';
 
-export interface SauceLabsProperties extends TunnelProperties {
-	accessKey: string;
-	directDomains: string[];
-	tunnelDomains: string[];
-	domainAuthentication: string[];
-	fastFailDomains: string[];
-	isSharedTunnel: boolean;
-	logFile: string;
-	pidFile: string;
-	logFileSize: number;
-	logTrafficStats: number;
-	restUrl: string;
-	skipSslDomains: string[];
-	squidOptions: string;
-	useProxyForTunnel: boolean;
-	username: string;
-	vmVersion: string;
-}
-
-export type SauceLabsOptions = Partial<SauceLabsProperties>;
 /**
- * A Sauce Labs tunnel. This tunnel uses Sauce Connect 4 on platforms where it is supported, and Sauce Connect 3
- * on all other platforms.
- *
- * @constructor module:digdug/SauceLabsTunnel
- * @extends module:digdug/Tunnel
+ * A Sauce Labs tunnel. This tunnel uses Sauce Connect 4 on platforms where it is supported, and Sauce Connect 3 on all
+ * other platforms.
  */
 export default class SauceLabsTunnel extends Tunnel implements SauceLabsProperties {
 	apiSecret: string;
@@ -50,23 +23,14 @@ export default class SauceLabsTunnel extends Tunnel implements SauceLabsProperti
 	/**
 	 * The Sauce Labs access key.
 	 *
-	 * @type {string}
 	 * @default the value of the SAUCE_ACCESS_KEY environment variable
 	 */
 	accessKey: string;
 
-	/**
-	 * A list of domains that should not be proxied by the tunnel on the remote VM.
-	 *
-	 * @type {string[]}
-	 */
+	/** A list of domains that should not be proxied by the tunnel on the remote VM. */
 	directDomains: string[];
 
-	/**
-	 * A list of domains that will be proxied by the tunnel on the remote VM.
-	 *
-	 * @type {string[]}
-	 */
+	/** A list of domains that will be proxied by the tunnel on the remote VM. */
 	tunnelDomains: string[];
 
 	directory: string;
@@ -74,112 +38,93 @@ export default class SauceLabsTunnel extends Tunnel implements SauceLabsProperti
 	/**
 	 * A list of URLs that require additional HTTP authentication. Only the hostname, port, and auth are used.
 	 * This property is only supported by Sauce Connect 4 tunnels.
-	 *
-	 * @type {string[]}
 	 */
 	domainAuthentication: string[];
 
 	/**
 	 * A list of regular expressions corresponding to domains whose connections should fail immediately if the VM
 	 * attempts to make a connection to them.
-	 *
-	 * @type {string[]}
 	 */
 	fastFailDomains: string[];
 
-	/**
-	 * Allows the tunnel to also be used by sub-accounts of the user that started the tunnel.
-	 *
-	 * @type {boolean}
-	 * @default
-	 */
+	/** Allows the tunnel to also be used by sub-accounts of the user that started the tunnel. */
 	isSharedTunnel: boolean;
 
-	/**
-	 * A filename where additional logs from the tunnel should be output.
-	 *
-	 * @type {string}
-	 */
+	/** A filename where additional logs from the tunnel should be output. */
 	logFile: string;
 
-	/**
-	 * A filename where Sauce Connect stores its process information.
-	 *
-	 * @type {string}
-	 */
+	/** A filename where Sauce Connect stores its process information. */
 	pidFile: string;
 
 	/**
-	 * Specifies the maximum log filesize before rotation, in bytes.
-	 * This property is only supported by Sauce Connect 3 tunnels.
-	 *
-	 * @type {number}
+	 * Specifies the maximum log filesize before rotation, in bytes. This property is only supported by Sauce Connect 3
+	 * tunnels.
 	 */
 	logFileSize: number;
 
 	/**
-	 * Log statistics about HTTP traffic every `logTrafficStats` milliseconds.
-	 * This property is only supported by Sauce Connect 4 tunnels.
-	 *
-	 * @type {number}
-	 * @default
+	 * Log statistics about HTTP traffic every `logTrafficStats` milliseconds. This property is only supported by Sauce
+	 * Connect 4 tunnels.
 	 */
 	logTrafficStats: number;
 
 	/**
-	 * An alternative URL for the Sauce REST API.
-	 * This property is only supported by Sauce Connect 3 tunnels.
-	 *
-	 * @type {string}
+	 * An alternative URL for the Sauce REST API. This property is only supported by Sauce Connect 3 tunnels.
 	 */
 	restUrl: string;
 
 	/**
 	 * A list of domains that should not have their SSL connections re-encrypted when going through the tunnel.
-	 *
-	 * @type {string[]}
 	 */
 	skipSslDomains: string[];
 
 	/**
-	 * An additional set of options to use with the Squid proxy for the remote VM.
-	 * This property is only supported by Sauce Connect 3 tunnels.
-	 *
-	 * @type {string}
+	 * An additional set of options to use with the Squid proxy for the remote VM. This property is only supported by
+	 * Sauce Connect 3 tunnels.
 	 */
 	squidOptions: string;
 
 	/**
-	 * Whether or not to use the proxy defined at {@link module:digdug/Tunnel#proxy} for the tunnel connection
-	 * itself.
-	 *
-	 * @type {boolean}
-	 * @default
+	 * Whether or not to use the proxy defined at {@link module:digdug/Tunnel#proxy} for the tunnel connection itself.
 	 */
 	useProxyForTunnel: boolean;
 
 	/**
 	 * The Sauce Labs username.
 	 *
-	 * @type {string}
 	 * @default the value of the SAUCE_USERNAME environment variable
 	 */
 	username: string;
 
 	/**
-	 * Overrides the version of the VM created on Sauce Labs.
-	 * This property is only supported by Sauce Connect 3 tunnels.
-	 *
-	 * @type {string}
+	 * Overrides the version of the VM created on Sauce Labs. This property is only supported by Sauce Connect 3
+	 * tunnels.
 	 */
 	vmVersion: string;
 
-	/**
-	 * The URL of a service that provides a list of environments supported by Sauce Labs.
-	 */
+	/** The URL of a service that provides a list of environments supported by Sauce Labs. */
 	environmentUrl: string;
 
 	scVersion: string;
+
+	constructor(options?: SauceLabsOptions) {
+		super(mixin({
+			accessKey: process.env.SAUCE_ACCESS_KEY,
+			directDomains: [],
+			directory: join(__dirname, 'saucelabs'),
+			domainAuthentication: [],
+			environmentUrl: 'https://saucelabs.com/rest/v1/info/platforms/webdriver',
+			fastFailDomains: [],
+			isSharedTunnel: false,
+			logTrafficStats: 0,
+			scVersion,
+			skipSslDomains: [],
+			tunnelDomains: [],
+			useProxyForTunnel: false,
+			username: process.env.SAUCE_USERNAME,
+			vmVersion: null
+		}, options));
+	}
 
 	get auth() {
 		return `${this.username || ''}:${this.accessKey || ''}`;
@@ -208,9 +153,9 @@ export default class SauceLabsTunnel extends Tunnel implements SauceLabsProperti
 	}
 
 	get isDownloaded() {
-		return util.fileExists(this.executable === 'java' ?
-			pathUtil.join(this.directory, 'Sauce-Connect.jar') :
-			pathUtil.join(this.directory, this.executable)
+		return fileExists(this.executable === 'java' ?
+			join(this.directory, 'Sauce-Connect.jar') :
+			join(this.directory, this.executable)
 		);
 	}
 
@@ -233,20 +178,10 @@ export default class SauceLabsTunnel extends Tunnel implements SauceLabsProperti
 		return url;
 	}
 
-	constructor(kwArgs?: SauceLabsOptions) {
-		super(util.assign(<SauceLabsOptions> {
-			directDomains: [],
-			tunnelDomains: [],
-			domainAuthentication: [],
-			fastFailDomains: [],
-			skipSslDomains: []
-		}, kwArgs));
-	}
-
 	protected _postDownloadFile(response: Response<any>, options?: DownloadOptions): Promise<void> {
 		return super._postDownloadFile(response, options).then(() => {
 			if (this.executable !== 'java') {
-				fs.chmodSync(pathUtil.join(this.directory, this.executable), parseInt('0755', 8));
+				chmodSync(join(this.directory, this.executable), parseInt('0755', 8));
 			}
 		});
 	}
@@ -376,7 +311,7 @@ export default class SauceLabsTunnel extends Tunnel implements SauceLabsProperti
 	}
 
 	protected _start(executor: ChildExecutor) {
-		const readyFile = pathUtil.join(os.tmpdir(), 'saucelabs-' + Date.now());
+		const readyFile = join(tmpdir(), 'saucelabs-' + Date.now());
 
 		let readMessage: Function;
 		let readStartupMessage: (message: string) => boolean;
@@ -454,13 +389,13 @@ export default class SauceLabsTunnel extends Tunnel implements SauceLabsProperti
 
 			// Polling API is used because we are only watching for one file, so efficiency is not a big deal, and the
 			// `fs.watch` API has extra restrictions which are best avoided
-			fs.watchFile(readyFile, { persistent: false, interval: 1007 }, function (current, previous) {
+			watchFile(readyFile, { persistent: false, interval: 1007 }, function (current, previous) {
 				if (Number(current.mtime) === Number(previous.mtime)) {
 					// readyFile hasn't been modified, so ignore the event
 					return;
 				}
 
-				fs.unwatchFile(readyFile);
+				unwatchFile(readyFile);
 
 				// We have to watch for errors until the tunnel has started successfully at which point we only want to
 				// watch for status messages to emit
@@ -471,7 +406,7 @@ export default class SauceLabsTunnel extends Tunnel implements SauceLabsProperti
 
 			// Sauce Connect exits with a zero status code when there is a failure, and outputs error messages to
 			// stdout, like a boss. Even better, it uses the "Error:" tag for warnings.
-			this._handle = util.on(child.stdout, 'data', function (data: string) {
+			this._handle = on(child.stdout, 'data', function (data: string) {
 				if (!readMessage) {
 					return;
 				}
@@ -511,9 +446,8 @@ export default class SauceLabsTunnel extends Tunnel implements SauceLabsProperti
 	 *     "os": "Windows 2003"
 	 * }
 	 *
-	 * @param {Object} environment a SauceLabs environment descriptor
+	 * @param environment a SauceLabs environment descriptor
 	 * @returns a normalized descriptor
-	 * @private
 	 */
 	protected _normalizeEnvironment(environment: any): NormalizedEnvironment {
 		const windowsMap: any = {
@@ -565,24 +499,23 @@ export default class SauceLabsTunnel extends Tunnel implements SauceLabsProperti
 	}
 };
 
-util.assign(SauceLabsTunnel.prototype, {
-	accessKey: process.env.SAUCE_ACCESS_KEY,
-	directDomains: null,
-	tunnelDomains: null,
-	directory: pathUtil.join(__dirname, 'saucelabs'),
-	domainAuthentication: null,
-	fastFailDomains: null,
-	isSharedTunnel: false,
-	logFile: null,
-	pidFile: null,
-	logFileSize: null,
-	logTrafficStats: 0,
-	restUrl: null,
-	skipSslDomains: null,
-	squidOptions: null,
-	useProxyForTunnel: false,
-	username: process.env.SAUCE_USERNAME,
-	vmVersion: null,
-	environmentUrl: 'https://saucelabs.com/rest/v1/info/platforms/webdriver',
-	scVersion: SC_VERSION
-});
+export interface SauceLabsProperties extends TunnelProperties {
+	accessKey: string;
+	directDomains: string[];
+	tunnelDomains: string[];
+	domainAuthentication: string[];
+	fastFailDomains: string[];
+	isSharedTunnel: boolean;
+	logFile: string;
+	pidFile: string;
+	logFileSize: number;
+	logTrafficStats: number;
+	restUrl: string;
+	skipSslDomains: string[];
+	squidOptions: string;
+	useProxyForTunnel: boolean;
+	username: string;
+	vmVersion: string;
+}
+
+export type SauceLabsOptions = Partial<SauceLabsProperties>;

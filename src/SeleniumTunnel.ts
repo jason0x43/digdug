@@ -1,40 +1,16 @@
-/**
- * @module digdug/SeleniumTunnel
- */
-
 import Tunnel, { TunnelProperties, DownloadOptions, ChildExecutor } from './Tunnel';
 import { format } from 'util';
-import * as pathUtil from 'path';
+import { extname, join } from 'path';
 import Task from 'dojo-core/async/Task';
 import { Response } from 'dojo-core/request';
-import * as util from './util';
+import { fileExists, on, writeFile } from './util';
 import { Handle } from 'dojo-core/interfaces';
+import { mixin } from 'dojo-core/lang';
 
-export interface DriverFile extends RemoteFile {
-	seleniumProperty: string;
-}
-
-export interface RemoteFile {
-	dontExtract?: boolean;
-	executable: string;
-	url: string;
-}
-
-export type DriverDescriptor = 'chrome' | 'ie' | 'firefox' | DriverFile | { name: string };
-
-export interface SeleniumProperties extends TunnelProperties {
-	seleniumArgs: string[];
-	drivers: DriverDescriptor[];
-	baseUrl: string;
-	version: string;
-	seleniumTimeout: number;
-}
-
-export type SeleniumOptions = Partial<SeleniumProperties>;
-
-export interface SeleniumDownloadOptions extends DownloadOptions {
-	executable?: string;
-}
+const SeleniumVersion = '3.3.1';
+const ChromeVersion = '2.28';
+const FirefoxVersion = '0.15.0';
+const IEVersion = '3.3.0';
 
 /**
  * A Selenium tunnel. This tunnel downloads the {@link http://www.seleniumhq.org/download/ Selenium-standalone server}
@@ -44,16 +20,9 @@ export interface SeleniumDownloadOptions extends DownloadOptions {
  * browsers the Selenium tunnel will support.
  *
  * Note that Java must be installed and in the system path to use this tunnel.
- *
- * @constructor module:digdug/SeleniumTunnel
- * @extends module:digdug/Tunnel
  */
 export default class SeleniumTunnel extends Tunnel implements SeleniumProperties {
-	/**
-	 * Additional arguments to send to the Selenium server at startup
-	 *
-	 * @type {Array.<string>}
-	 */
+	/** Additional arguments to send to the Selenium server at startup */
 	seleniumArgs: string[];
 
 	/**
@@ -80,7 +49,6 @@ export default class SeleniumTunnel extends Tunnel implements SeleniumProperties
 	 *      }
 	 * 	]
 	 *
-	 * @type {Array.<string|Object>}
 	 * @default [ 'chrome' ]
 	 */
 	drivers: DriverDescriptor[];
@@ -88,7 +56,6 @@ export default class SeleniumTunnel extends Tunnel implements SeleniumProperties
 	/**
 	 * The base address where Selenium artifacts may be found.
 	 *
-	 * @type {string}
 	 * @default https://selenium-release.storage.googleapis.com
 	 */
 	baseUrl: string;
@@ -96,25 +63,33 @@ export default class SeleniumTunnel extends Tunnel implements SeleniumProperties
 	/**
 	 * The desired version of selenium to install.
 	 *
-	 * @type {string}
-	 * @default 3.0.1
+	 * @default 3.3.1
 	 */
 	version: string;
 
 	/**
 	 * Timeout in milliseconds for communicating with the Selenium server
 	 *
-	 * @type {number}
 	 * @default 5000
 	 */
 	seleniumTimeout: number;
+
+	constructor(options?: SeleniumOptions) {
+		super(mixin({
+			seleniumArgs: null,
+			drivers: ['chrome'],
+			baseUrl: 'https://selenium-release.storage.googleapis.com',
+			version: SeleniumVersion,
+			seleniumTimeout: 5000
+		}, options));
+	}
 
 	get artifact() {
 		return `selenium-server-standalone-${this.version}.jar`;
 	}
 
 	get directory() {
-		return pathUtil.join(__dirname, 'selenium-standalone');
+		return join(__dirname, 'selenium-standalone');
 	}
 
 	get executable() {
@@ -123,21 +98,14 @@ export default class SeleniumTunnel extends Tunnel implements SeleniumProperties
 
 	get isDownloaded() {
 		const directory = this.directory;
-		return this._getDriverConfigs().every(config => {
-				return util.fileExists(pathUtil.join(directory, config.executable));
-			}) &&
-			util.fileExists(pathUtil.join(directory, this.artifact));
+		return fileExists(join(directory, this.artifact)) && this._getDriverConfigs().every(config => {
+			return fileExists(join(directory, config.executable));
+		});
 	}
 
 	get url() {
 		const majorMinorVersion = this.version.slice(0, this.version.lastIndexOf('.'));
 		return format('%s/%s/%s', this.baseUrl, majorMinorVersion, this.artifact);
-	}
-
-	constructor(options?: SeleniumOptions) {
-		super(util.assign({
-			drivers: [ 'chrome' ]
-		}, options));
 	}
 
 	download(forceDownload = false): Task<any> {
@@ -157,7 +125,7 @@ export default class SeleniumTunnel extends Tunnel implements SeleniumProperties
 				tasks = configs.map(config => {
 					const executable = config.executable;
 
-					if (util.fileExists(pathUtil.join(this.directory, executable))) {
+					if (fileExists(join(this.directory, executable))) {
 						return Task.resolve();
 					}
 
@@ -211,7 +179,7 @@ export default class SeleniumTunnel extends Tunnel implements SeleniumProperties
 		const args: string[] = [];
 
 		driverConfigs.reduce(function (args: string[], config) {
-			const file = pathUtil.join(directory, config.executable);
+			const file = join(directory, config.executable);
 			args.push('-D' + config.seleniumProperty + '=' + file);
 			return args;
 		}, args);
@@ -222,7 +190,7 @@ export default class SeleniumTunnel extends Tunnel implements SeleniumProperties
 
 		args.push(
 			'-jar',
-			pathUtil.join(this.directory, this.artifact),
+			join(this.directory, this.artifact),
 			'-port',
 			this.port
 		);
@@ -236,8 +204,8 @@ export default class SeleniumTunnel extends Tunnel implements SeleniumProperties
 	}
 
 	protected _postDownloadFile(response: Response<any>, options: SeleniumDownloadOptions) {
-		if (pathUtil.extname(options.executable) === '.jar') {
-			return util.writeFile(response.data, pathUtil.join(this.directory, options.executable));
+		if (extname(options.executable) === '.jar') {
+			return writeFile(response.data, join(this.directory, options.executable));
 		}
 		return super._postDownloadFile(response, options);
 	}
@@ -245,7 +213,7 @@ export default class SeleniumTunnel extends Tunnel implements SeleniumProperties
 	protected _start(executor: ChildExecutor) {
 		let handle: Handle;
 		const task = this._makeChild((child, resolve, reject) => {
-			handle = util.on(child.stderr, 'data', (data: string) => {
+			handle = on(child.stderr, 'data', (data: string) => {
 				// Selenium recommends that we poll the hub looking for a status response
 				// https://github.com/seleniumhq/selenium-google-code-issue-archive/issues/7957
 				// We're going against the recommendation here for a few reasons
@@ -278,19 +246,37 @@ export default class SeleniumTunnel extends Tunnel implements SeleniumProperties
 	}
 }
 
-util.assign(SeleniumTunnel.prototype, <SeleniumProperties> {
-	seleniumArgs: null,
-	drivers: null,
-	baseUrl: 'https://selenium-release.storage.googleapis.com',
-	version: '3.0.1',
-	seleniumTimeout: 5000
-});
+export interface DriverFile extends RemoteFile {
+	seleniumProperty: string;
+}
+
+export interface RemoteFile {
+	dontExtract?: boolean;
+	executable: string;
+	url: string;
+}
+
+export type DriverDescriptor = 'chrome' | 'ie' | 'firefox' | DriverFile | { name: string };
+
+export interface SeleniumProperties extends TunnelProperties {
+	seleniumArgs: string[];
+	drivers: DriverDescriptor[];
+	baseUrl: string;
+	version: string;
+	seleniumTimeout: number;
+}
+
+export type SeleniumOptions = Partial<SeleniumProperties>;
+
+export interface SeleniumDownloadOptions extends DownloadOptions {
+	executable?: string;
+}
 
 type DriverConstructor = { new (config?: any): DriverFile; };
 
 abstract class Config<T> {
 	constructor(config: T) {
-		util.assign(this, config);
+		mixin(this, config);
 	}
 
 	readonly abstract executable: string;
@@ -311,7 +297,7 @@ class ChromeConfig extends Config<ChromeOptions> implements ChromeProperties, Dr
 	arch = process.arch;
 	baseUrl = 'https://chromedriver.storage.googleapis.com';
 	platform = process.platform;
-	version = '2.25';
+	version = ChromeVersion;
 
 	get artifact() {
 		let platform = this.platform;
@@ -354,7 +340,7 @@ class FirefoxConfig extends Config<FirefoxOptions> implements FirefoxProperties,
 	arch = process.arch;
 	baseUrl = 'https://github.com/mozilla/geckodriver/releases/download';
 	platform = process.platform;
-	version = '0.11.1';
+	version = FirefoxVersion;
 
 	get artifact() {
 		let platform = this.platform;
@@ -396,7 +382,7 @@ type IEOptions = Partial<IEProperties>;
 class IEConfig extends Config<IEOptions> implements IEProperties, DriverFile {
 	arch = process.arch;
 	baseUrl = 'https://selenium-release.storage.googleapis.com';
-	version = '3.0.0';
+	version = IEVersion;
 
 	get artifact() {
 		const architecture = this.arch === 'x64' ? 'x64' : 'Win32';

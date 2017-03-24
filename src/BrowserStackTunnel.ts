@@ -1,42 +1,22 @@
-/**
- * @module digdug/BrowserStackTunnel
- */
-
-import * as fs from 'fs';
-import * as pathUtil from 'path';
+import { chmodSync } from 'fs';
+import { join } from 'path';
 import Task from 'dojo-core/async/Task';
 import request, { Response } from 'dojo-core/request';
 import { NodeRequestOptions } from 'dojo-core/request/node';
 import Tunnel, { TunnelProperties, DownloadOptions, ChildExecutor, NormalizedEnvironment, StatusEvent } from './Tunnel';
 import { parse as parseUrl, Url } from 'url';
-import * as util from './util';
+import { mixin } from 'dojo-core/lang';
 import { JobState } from './interfaces';
-
-export interface BrowserStackProperties extends TunnelProperties {
-	accessKey: string;
-	automateOnly: boolean;
-	killOtherTunnels: boolean;
-	servers: (Url | string)[];
-	skipServerValidation: boolean;
-	forceLocal: boolean;
-	username: string;
-	environmentUrl: string;
-}
-
-export type BrowserStackOptions = Partial<BrowserStackProperties>;
+import { on } from './util';
 
 /**
  * A BrowserStack tunnel.
- *
- * @constructor module:digdug/BrowserStackTunnel
- * @extends module:digdug/Tunnel
  */
 export default class BrowserStackTunnel extends Tunnel {
 	/**
 	 * The BrowserStack access key. This will be initialized with the value of the `BROWSERSTACK_ACCESS_KEY`
 	 * environment variable.
 	 *
-	 * @type {string}
 	 * @default the value of the BROWSERSTACK_ACCESS_KEY environment variable
 	 */
 	accessKey: string;
@@ -44,9 +24,6 @@ export default class BrowserStackTunnel extends Tunnel {
 	/**
 	 * Whether or not to start the tunnel with only WebDriver support. Setting this value to `false` is not
 	 * supported.
-	 *
-	 * @type {boolean}
-	 * @default
 	 */
 	automateOnly: boolean;
 
@@ -54,12 +31,7 @@ export default class BrowserStackTunnel extends Tunnel {
 
 	hostname: string;
 
-	/**
-	 * If true, any other tunnels running on the account will be killed when the tunnel is started.
-	 *
-	 * @type {boolean}
-	 * @default
-	 */
+	/** If true, any other tunnels running on the account will be killed when the tunnel is started. */
 	killOtherTunnels: boolean;
 
 	port: string;
@@ -68,40 +40,42 @@ export default class BrowserStackTunnel extends Tunnel {
 
 	/**
 	 * A list of server URLs that should be proxied by the tunnel. Only the hostname, port, and protocol are used.
-	 *
-	 * @type {string[]}
 	 */
 	servers: (Url | string)[];
 
-	/**
-	 * Skip verification that the proxied servers are online and responding at the time the tunnel starts.
-	 *
-	 * @type {boolean}
-	 * @default
-	 */
+	/** Skip verification that the proxied servers are online and responding at the time the tunnel starts. */
 	skipServerValidation: boolean;
 
-	/**
-	 * If true, route all traffic via the local machine.
-	 *
-	 * @type {boolean}
-	 * @default
-	 */
+	/** If true, route all traffic via the local machine. */
 	forceLocal: boolean;
 
 	/**
 	 * The BrowserStack username. This will be initialized with the value of the `BROWSERSTACK_USERNAME`
 	 * environment variable.
 	 *
-	 * @type {string}
 	 * @default the value of the BROWSERSTACK_USERNAME environment variable
 	 */
 	username: string;
 
-	/**
-	 * The URL of a service that provides a list of environments supported by BrowserStack.
-	 */
+	/** The URL of a service that provides a list of environments supported by BrowserStack. */
 	environmentUrl: string;
+
+	constructor(options?: BrowserStackOptions) {
+		super(mixin({
+			accessKey: process.env.BROWSERSTACK_ACCESS_KEY,
+			automateOnly: true,
+			directory: join(__dirname, 'browserstack'),
+			environmentUrl: 'https://www.browserstack.com/automate/browsers.json',
+			forceLocal: false,
+			hostname: 'hub.browserstack.com',
+			killOtherTunnels: false,
+			port: '443',
+			protocol: 'https',
+			servers: [],
+			skipServerValidation: true,
+			username: process.env.BROWSERSTACK_USERNAME
+		}, options));
+	}
 
 	get auth() {
 		return `${this.username || ''}:${this.accessKey || ''}`;
@@ -144,16 +118,10 @@ export default class BrowserStackTunnel extends Tunnel {
 		return url;
 	}
 
-	constructor(kwArgs?: BrowserStackOptions) {
-		super(util.assign({
-			servers: []
-		}, kwArgs));
-	}
-
 	protected _postDownloadFile(response: Response<any>, options?: DownloadOptions): Promise<void> {
 		return super._postDownloadFile(response, options).then(() => {
-			const executable = pathUtil.join(this.directory, this.executable);
-			fs.chmodSync(executable, parseInt('0755', 8));
+			const executable = join(this.directory, this.executable);
+			chmodSync(executable, parseInt('0755', 8));
 		});
 	}
 
@@ -219,7 +187,7 @@ export default class BrowserStackTunnel extends Tunnel {
 
 	protected _start(executor: ChildExecutor) {
 		return this._makeChild((child, resolve, reject) => {
-			let handle = util.on(child.stdout, 'data', (data: any) => {
+			let handle = on(child.stdout, 'data', (data: any) => {
 				data = String(data);
 				const error = /\s*\*\*\* Error: (.*)$/m.exec(data);
 				if (error) {
@@ -274,7 +242,7 @@ export default class BrowserStackTunnel extends Tunnel {
 
 	/**
 	 * Attempt to normalize a BrowserStack described environment with the standard Selenium capabilities
-	 * 
+	 *
 	 * BrowserStack returns a list of environments that looks like:
 	 *
 	 * {
@@ -284,10 +252,9 @@ export default class BrowserStackTunnel extends Tunnel {
 	 *     "device": null,
 	 *     "os": "OS X"
 	 * }
-	 * 
-	 * @param {Object} environment a BrowserStack environment descriptor
+	 *
+	 * @param environment a BrowserStack environment descriptor
 	 * @returns a normalized descriptor
-	 * @private
 	 */
 	protected _normalizeEnvironment(environment: any): NormalizedEnvironment {
 		const platformMap: any = {
@@ -335,17 +302,15 @@ export default class BrowserStackTunnel extends Tunnel {
 	}
 };
 
-util.assign(BrowserStackTunnel.prototype, <BrowserStackProperties> {
-	accessKey: process.env.BROWSERSTACK_ACCESS_KEY,
-	automateOnly: true,
-	directory: pathUtil.join(__dirname, 'browserstack'),
-	environmentUrl: 'https://www.browserstack.com/automate/browsers.json',
-	hostname: 'hub.browserstack.com',
-	killOtherTunnels: false,
-	port: '443',
-	protocol: 'https',
-	servers: null,
-	skipServerValidation: true,
-	forceLocal: false,
-	username: process.env.BROWSERSTACK_USERNAME
-});
+export interface BrowserStackProperties extends TunnelProperties {
+	accessKey: string;
+	automateOnly: boolean;
+	killOtherTunnels: boolean;
+	servers: (Url | string)[];
+	skipServerValidation: boolean;
+	forceLocal: boolean;
+	username: string;
+	environmentUrl: string;
+}
+
+export type BrowserStackOptions = Partial<BrowserStackProperties>;

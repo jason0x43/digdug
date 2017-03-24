@@ -1,30 +1,16 @@
 import { createHandle } from 'dojo-core/lang';
 import { Handle } from 'dojo-core/interfaces';
-import * as fs from 'fs';
-import * as path from 'path';
+import { mkdirSync, statSync, writeFile as fsWriteFile } from 'fs';
+import { dirname } from 'path';
 import { RequestError } from 'dojo-core/request';
-
-const hasOwnProperty = Object.prototype.hasOwnProperty;
-
-export function assign<T, U>(target: T, ...sources: U[]): T & U {
-	for (let source of sources) {
-		for (let key in source) {
-			if (hasOwnProperty.call(source, key)) {
-				Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key));
-			}
-		}
-	}
-
-	return <any> target;
-}
 
 /**
  * Attaches an event to a Node.js EventEmitter and returns a handle for removing the listener later.
  *
- * @param {EventEmitter} emitter A Node.js EventEmitter object.
- * @param {string} event The name of the event to listen for.
- * @param {Function} listener The event listener that will be invoked when the event occurs.
- * @returns {{ remove: Function }} A remove handle.
+ * @param emitter A Node.js EventEmitter object.
+ * @param event The name of the event to listen for.
+ * @param listener The event listener that will be invoked when the event occurs.
+ * @returns A remove handle.
  */
 export function on(emitter: NodeJS.EventEmitter, event: string | symbol, listener: Function): Handle {
 	emitter.on(event, listener);
@@ -34,12 +20,12 @@ export function on(emitter: NodeJS.EventEmitter, event: string | symbol, listene
 /**
  * Returns true if a file or directory exists
  *
- * @param {string} filename
- * @returns {bool} true if filename exists, false otherwise
+ * @param filename
+ * @returns true if filename exists, false otherwise
  */
 export function fileExists(filename: string): boolean {
 	try {
-		fs.statSync(filename);
+		statSync(filename);
 		return true;
 	}
 	catch (error) {
@@ -52,9 +38,9 @@ export function fileExists(filename: string): boolean {
  *
  * The file's parent directories will be created if they do not already exist.
  *
- * @param {Buffer} data 
- * @param {string} filename
- * @returns {Promise.<void>} A Promise that resolves when the file has been written
+ * @param data
+ * @param filename
+ * @returns A Promise that resolves when the file has been written
  */
 export function writeFile(data: any, filename: string) {
 	return new Promise<void>(function (resolve, reject) {
@@ -64,24 +50,24 @@ export function writeFile(data: any, filename: string) {
 			}
 
 			try {
-				fs.mkdirSync(dir);
+				mkdirSync(dir);
 			}
 			catch (error) {
 				// A parent directory didn't exist, create it
 				if (error.code === 'ENOENT') {
-					mkdirp(path.dirname(dir));
+					mkdirp(dirname(dir));
 					mkdirp(dir);
 				}
 				else {
-					if (!fs.statSync(dir).isDirectory()) {
+					if (!statSync(dir).isDirectory()) {
 						throw error;
 					}
 				}
 			}
 		}
 
-		mkdirp(path.dirname(filename));
-		fs.writeFile(filename, data, function (error) {
+		mkdirp(dirname(filename));
+		fsWriteFile(filename, data, function (error) {
 			if (error) {
 				reject(error);
 			}

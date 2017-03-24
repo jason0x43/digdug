@@ -1,26 +1,16 @@
-/**
- * @module digdug/CrossBrowserTestingTunnel
- */
-
-import * as fs from 'fs';
-import * as os from 'os';
-import * as pathUtil from 'path';
+import { watchFile, unwatchFile } from 'fs';
+import { tmpdir } from 'os';
+import { join } from 'path';
 import request from 'dojo-core/request';
 import { NodeRequestOptions } from 'dojo-core/request/node';
 import Tunnel, { TunnelProperties, ChildExecutor, NormalizedEnvironment } from './Tunnel';
 import { JobState } from './interfaces';
-import * as util from './util';
+import { on } from './util';
 import Task from 'dojo-core/async/Task';
-import { createCompositeHandle } from 'dojo-core/lang';
+import { createCompositeHandle, mixin } from 'dojo-core/lang';
 import { exec } from 'child_process';
 
-const CBT_VERSION = '0.0.27';
-
-export interface CrossBrowserTestingProperties extends TunnelProperties {
-	apiKey: string;
-}
-
-export type CrossBrowserTestingOptions = Partial<CrossBrowserTestingProperties>;
+const cbtVersion = '0.0.34';
 
 /**
  * A CrossBrowserTesting tunnel.
@@ -35,9 +25,9 @@ export type CrossBrowserTestingOptions = Partial<CrossBrowserTestingProperties>;
  * ```js
  * define({
  * 	proxyUrl: 'http://local:9000',
- * 
+ *
  * 	tunnel: 'CrossBrowserTesting',
- * 
+ *
  * 	environments: [
  * 		{
  * 			browserName: 'chrome',
@@ -45,20 +35,16 @@ export type CrossBrowserTestingOptions = Partial<CrossBrowserTestingProperties>;
  * 			browser_api_name: 'Chrome52'
  * 		}
  * 	]
- * 
+ *
  * 	// Other Intern config options...
  * });
  * ```
- *
- * @constructor module:digdug/CrossBrowserTestingTunnel
- * @extends module:digdug/Tunnel
  */
 export default class CrossBrowserTestingTunnel extends Tunnel implements CrossBrowserTestingProperties {
 	/**
 	 * The CrossBrowserTesting API key. This will be initialized with the value of the `CBT_APIKEY` environment
 	 * variable.
 	 *
-	 * @type {string}
 	 * @default the value of the CBT_APIKEY environment variable
 	 */
 	apiKey: string;
@@ -67,7 +53,6 @@ export default class CrossBrowserTestingTunnel extends Tunnel implements CrossBr
 	 * The CrossBrowserTesting username. This will be initialized with the value of the `CBT_USERNAME` environment
 	 * variable.
 	 *
-	 * @type {string}
 	 * @default the value of the CBT_USERNAME environment variable
 	 */
 	username: string;
@@ -95,8 +80,16 @@ export default class CrossBrowserTestingTunnel extends Tunnel implements CrossBr
 		}
 	}
 
-	constructor(kwArgs?: CrossBrowserTestingOptions) {
-		super(kwArgs);
+	constructor(options?: CrossBrowserTestingOptions) {
+		super(mixin({
+			apiKey: process.env.CBT_APIKEY,
+			cbtVersion,
+			environmentUrl: 'https://crossbrowsertesting.com/api/v3/selenium/browsers?format=json',
+			executable: 'node',
+			hostname: 'hub.crossbrowsertesting.com',
+			port: '80',
+			username: process.env.CBT_USERNAME
+		}, options));
 	}
 
 	download(forceDownload = false): Task<any> {
@@ -160,20 +153,20 @@ export default class CrossBrowserTestingTunnel extends Tunnel implements CrossBr
 	}
 
 	protected _start(executor: ChildExecutor) {
-		const readyFile = pathUtil.join(os.tmpdir(), 'CrossBrowserTesting-' + Date.now());
+		const readyFile = join(tmpdir(), 'CrossBrowserTesting-' + Date.now());
 
 		return this._makeChild((child, resolve, reject) => {
 			let stdout: string[] = [];
 
 			// Polling API is used because we are only watching for one file, so efficiency is not a big deal, and the
 			// `fs.watch` API has extra restrictions which are best avoided
-			fs.watchFile(readyFile, { persistent: false, interval: 1007 }, function (current, previous) {
+			watchFile(readyFile, { persistent: false, interval: 1007 }, function (current, previous) {
 				if (Number(current.mtime) === Number(previous.mtime)) {
 					// readyFile hasn't been modified, so ignore the event
 					return;
 				}
 
-				fs.unwatchFile(readyFile);
+				unwatchFile(readyFile);
 				readHandle.destroy();
 				exitHandle.destroy();
 				stdout = null;
@@ -182,10 +175,10 @@ export default class CrossBrowserTestingTunnel extends Tunnel implements CrossBr
 
 			// The cbt tunnel outputs its startup error messages on stdout. Capture any data on stdout and display it if the
 			// process exits early.
-			const readHandle = util.on(child.stdout, 'data', (data: any) => {
+			const readHandle = on(child.stdout, 'data', (data: any) => {
 				stdout.push(String(data));
 			});
-			const exitHandle = util.on(child, 'exit', function () {
+			const exitHandle = on(child, 'exit', function () {
 				process.stderr.write(stdout.join(''));
 			});
 
@@ -207,9 +200,8 @@ export default class CrossBrowserTestingTunnel extends Tunnel implements CrossBr
 	 *     "version":"36"
 	 * }
 	 *
-	 * @param {Object} environment a TestingBot environment descriptor
+	 * @param environment a TestingBot environment descriptor
 	 * @returns a normalized descriptor
-	 * @private
 	 */
 	protected _normalizeEnvironment(environment: any): NormalizedEnvironment {
 		const platform = environment.api_name;
@@ -235,12 +227,8 @@ export default class CrossBrowserTestingTunnel extends Tunnel implements CrossBr
 	}
 }
 
-util.assign(CrossBrowserTestingTunnel.prototype, <CrossBrowserTestingOptions> {
-	apiKey: process.env.CBT_APIKEY,
-	environmentUrl: 'https://crossbrowsertesting.com/api/v3/selenium/browsers?format=json',
-	executable: 'node',
-	hostname: 'hub.crossbrowsertesting.com',
-	port: '80',
-	username: process.env.CBT_USERNAME,
-	cbtVersion: CBT_VERSION
-});
+export interface CrossBrowserTestingProperties extends TunnelProperties {
+	apiKey: string;
+}
+
+export type CrossBrowserTestingOptions = Partial<CrossBrowserTestingProperties>;
