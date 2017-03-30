@@ -66,7 +66,7 @@ export default class TestingBotTunnel extends Tunnel implements TunnelProperties
 
 	protected _makeArgs(readyFile: string): string[] {
 		const args = [
-			'-jar', 'testingbot-tunnel/testingbot-tunnel.jar',
+			'-jar', join(this.directory, 'testingbot-tunnel', 'testingbot-tunnel.jar'),
 			this.username,
 			this.accessKey,
 			'-P', this.port,

@@ -26,20 +26,15 @@ registerSuite({
 	},
 
 	'#start': function () {
-		try {
-			(<any> tunnel)._state = 'running';
-			assert.throws(function () {
-				tunnel.start();
-			});
+		const task = Task.resolve();
+		tunnel['_startTask'] = task;
+		tunnel['_state'] = 'stopping';
+		assert.throws(() => {
+			tunnel.start();
+		});
 
-			(<any> tunnel)._state = 'stopping';
-			assert.throws(function () {
-				tunnel.start();
-			});
-		}
-		finally {
-			(<any> tunnel)._state = 'stopped';
-		}
+		tunnel['_state'] = 'running';
+		assert.strictEqual(tunnel.start(), task, 'Running tunnel should have returned start task');
 	},
 
 	'#stop': {

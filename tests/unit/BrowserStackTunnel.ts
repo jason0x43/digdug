@@ -1,6 +1,7 @@
 import BrowserStackTunnel from 'src/BrowserStackTunnel';
-import * as registerSuite from 'intern!object';
-import * as assert from 'intern/chai!assert';
+import { join } from 'path';
+import registerSuite = require('intern!object');
+import assert = require('intern/chai!assert');
 
 let tunnel: BrowserStackTunnel;
 
@@ -19,11 +20,11 @@ registerSuite({
 
 	'#executable'() {
 		tunnel.platform = 'foo';
-		let executable = './BrowserStackLocal';
+		let executable = join(tunnel.directory, 'BrowserStackLocal');
 		assert.equal(tunnel.executable, executable);
 
 		tunnel.platform = 'win32';
-		executable = './BrowserStackLocal.exe';
+		executable = join(tunnel.directory, 'BrowserStackLocal.exe');
 		assert.equal(tunnel.executable, executable);
 	},
 

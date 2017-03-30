@@ -57,7 +57,7 @@ export default class BrowserStackTunnel extends Tunnel {
 	}
 
 	get executable() {
-		return `./BrowserStackLocal${this.platform === 'win32' ? '.exe' : '' }`;
+		return join(this.directory, `BrowserStackLocal${this.platform === 'win32' ? '.exe' : '' }`);
 	}
 
 	get extraCapabilities(): Object {
@@ -95,7 +95,7 @@ export default class BrowserStackTunnel extends Tunnel {
 
 	protected _postDownloadFile(response: Response<any>, options?: DownloadOptions): Promise<void> {
 		return super._postDownloadFile(response, options).then(() => {
-			const executable = join(this.directory, this.executable);
+			const executable = this.executable;
 			chmodSync(executable, parseInt('0755', 8));
 		});
 	}

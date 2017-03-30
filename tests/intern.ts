@@ -45,3 +45,5 @@ export const suites = [
 ];
 
 export const excludeInstrumentation = /^(?:_build\/tests|node_modules)\//;
+
+export const filterErrorStack = true;

@@ -114,7 +114,7 @@ export default class SauceLabsTunnel extends Tunnel implements SauceLabsProperti
 		const architecture = this.architecture;
 
 		if (platform === 'osx' || platform === 'win32' || (platform === 'linux' && architecture === 'x64')) {
-			return './sc-' + this.scVersion + '-' + platform + '/bin/sc' + (platform === 'win32' ? '.exe' : '');
+			return join(this.directory, 'sc-' + this.scVersion + '-' + platform + '/bin/sc' + (platform === 'win32' ? '.exe' : ''));
 		}
 		else {
 			return 'java';
@@ -134,7 +134,7 @@ export default class SauceLabsTunnel extends Tunnel implements SauceLabsProperti
 	get isDownloaded() {
 		return fileExists(this.executable === 'java' ?
 			join(this.directory, 'Sauce-Connect.jar') :
-			join(this.directory, this.executable)
+			join(this.executable)
 		);
 	}
 
@@ -160,7 +160,7 @@ export default class SauceLabsTunnel extends Tunnel implements SauceLabsProperti
 	protected _postDownloadFile(response: Response<any>, options?: DownloadOptions): Promise<void> {
 		return super._postDownloadFile(response, options).then(() => {
 			if (this.executable !== 'java') {
-				chmodSync(join(this.directory, this.executable), parseInt('0755', 8));
+				chmodSync(this.executable, parseInt('0755', 8));
 			}
 		});
 	}

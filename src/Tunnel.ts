@@ -2,7 +2,6 @@ import Evented from 'dojo-core/Evented';
 import { EventObject, EventTargettedObject } from 'dojo-interfaces/core';
 import { createCompositeHandle, mixin } from 'dojo-core/lang';
 import { Handle } from 'dojo-core/interfaces';
-import { join } from 'path';
 import Task, { State } from 'dojo-core/async/Task';
 import sendRequest, { ResponsePromise, Response } from 'dojo-core/request';
 import { NodeRequestOptions } from 'dojo-core/request/node';
@@ -132,7 +131,7 @@ export default class Tunnel extends Evented implements TunnelProperties, Url {
 	verbose: boolean;
 
 	protected _startTask: Task<any>;
-	protected  _stopTask: Promise<number>;
+	protected _stopTask: Promise<number>;
 	protected _handle: Handle = null;
 	protected _process: ChildProcess = null;
 	protected _state: 'stopped' | 'starting' | 'running' | 'stopping' = 'stopped';
@@ -155,7 +154,7 @@ export default class Tunnel extends Evented implements TunnelProperties, Url {
 	 * Whether or not the tunnel software has already been downloaded.
 	 */
 	get isDownloaded(): boolean {
-		return fileExists(join(this.directory, this.executable));
+		return fileExists(this.executable);
 	}
 
 	/**
@@ -205,6 +204,10 @@ export default class Tunnel extends Evented implements TunnelProperties, Url {
 	protected _downloadFile(url: string, proxy: string, options?: DownloadOptions): Task<any> {
 		let request: ResponsePromise<any>;
 
+		if (!url) {
+			return Task.reject(new Error('URL is empty'));
+		}
+
 		return new Task<any>(
 			(resolve, reject) => {
 				// TODO: progress events
@@ -212,18 +215,17 @@ export default class Tunnel extends Evented implements TunnelProperties, Url {
 				// 	self.emit('downloadprogress', util.mixin({}, info, { url: url }));
 				// 	progress(info);
 				// }
-				request = sendRequest(url, <NodeRequestOptions<any>> { proxy });
+				request = sendRequest(url, <NodeRequestOptions<any>>{ proxy });
 				request
 					.then(response => {
 						resolve(this._postDownloadFile(response, options));
 					})
-					.catch((error: Error) => {
+					.catch(error => {
 						if (isRequestError(error) && error.response.statusCode >= 400) {
 							error = new Error(`Download server returned status code ${error.response.statusCode}`);
 						}
 						reject(error);
-					})
-				;
+					});
 			},
 			() => {
 				request && request.cancel();
@@ -240,7 +242,7 @@ export default class Tunnel extends Evented implements TunnelProperties, Url {
 			decompress(response.data, this.directory)
 				.then(() => resolve())
 				.catch(reject)
-			;
+				;
 		});
 	}
 
@@ -270,7 +272,6 @@ export default class Tunnel extends Evented implements TunnelProperties, Url {
 		const command = this.executable;
 		const args = this._makeArgs(...values);
 		const options = this._makeOptions(...values);
-
 		const child = spawn(command, args, options);
 
 		child.stdout.setEncoding('utf8');
@@ -332,8 +333,7 @@ export default class Tunnel extends Evented implements TunnelProperties, Url {
 						});
 					});
 				}
-			})
-		;
+			});
 	}
 
 	/**
@@ -345,10 +345,7 @@ export default class Tunnel extends Evented implements TunnelProperties, Url {
 	 * @returns A set of options matching those provided to Node.js {@link module:child_process.spawn}.
 	 */
 	protected _makeOptions(...values: string[]) {
-		return {
-			cwd: this.directory,
-			env: process.env
-		};
+		return { env: process.env };
 	}
 
 	/**
@@ -369,10 +366,11 @@ export default class Tunnel extends Evented implements TunnelProperties, Url {
 	 */
 	start() {
 		switch (this._state) {
-		case 'stopping':
-			throw new Error('Previous tunnel is still terminating');
-		case 'starting':
-			return this._startTask;
+			case 'stopping':
+				throw new Error('Previous tunnel is still terminating');
+			case 'running':
+			case 'starting':
+				return this._startTask;
 		}
 
 		this._state = 'starting';
@@ -383,7 +381,7 @@ export default class Tunnel extends Evented implements TunnelProperties, Url {
 				return this._start((child, resolve, reject) => {
 					this._process = child;
 					this._handle = createCompositeHandle(
-						this._handle || { destroy: function () {} },
+						this._handle || { destroy: function () { } },
 						on(child.stdout, 'data', proxyIOEvent(this, 'stdout')),
 						on(child.stderr, 'data', proxyIOEvent(this, 'stderr')),
 						on(child, 'exit', () => {
@@ -391,8 +389,7 @@ export default class Tunnel extends Evented implements TunnelProperties, Url {
 						})
 					);
 				});
-			})
-		;
+			});
 
 		this._startTask
 			.then(() => {
@@ -404,7 +401,7 @@ export default class Tunnel extends Evented implements TunnelProperties, Url {
 					status: 'Ready'
 				});
 			})
-			.catch((error: Error) => {
+			.catch(error => {
 				this._startTask = null;
 				this._state = 'stopped';
 				this.emit<StatusEvent>({
@@ -412,8 +409,7 @@ export default class Tunnel extends Evented implements TunnelProperties, Url {
 					target: this,
 					status: error.name === 'CancelError' ? 'Start cancelled' : 'Failed to start tunnel'
 				});
-			})
-		;
+			});
 
 		return this._startTask;
 	}
@@ -452,11 +448,11 @@ export default class Tunnel extends Evented implements TunnelProperties, Url {
 	 */
 	stop(): Promise<number> {
 		switch (this._state) {
-		case 'starting':
-			this._startTask.cancel();
-			return this._startTask.finally(() => null);
-		case 'stopping':
-			return this._stopTask;
+			case 'starting':
+				this._startTask.cancel();
+				return this._startTask.finally(() => null);
+			case 'stopping':
+				return this._stopTask;
 		}
 
 		this._state = 'stopping';
@@ -472,7 +468,7 @@ export default class Tunnel extends Evented implements TunnelProperties, Url {
 				this._state = 'running';
 				throw error;
 			})
-		;
+			;
 
 		return this._stopTask;
 	}
@@ -517,7 +513,7 @@ export default class Tunnel extends Evented implements TunnelProperties, Url {
 			return Task.resolve([]);
 		}
 
-		return <Task<any>> sendRequest(this.environmentUrl, <NodeRequestOptions<any>> {
+		return <Task<any>>sendRequest(this.environmentUrl, <NodeRequestOptions<any>>{
 			password: this.accessKey,
 			user: this.username,
 			proxy: this.proxy
@@ -527,7 +523,7 @@ export default class Tunnel extends Evented implements TunnelProperties, Url {
 					.reduce((environments: NormalizedEnvironment[], environment: any) => {
 						return environments.concat(this._normalizeEnvironment(environment));
 					}, [])
-				;
+					;
 			}
 			else {
 				throw new Error(`Server replied with a status of ${response.statusCode}`);
@@ -542,7 +538,7 @@ export default class Tunnel extends Evented implements TunnelProperties, Url {
 	 * @returns a normalized environment
 	 */
 	protected _normalizeEnvironment(environment: Object): NormalizedEnvironment {
-		return <any> environment;
+		return <any>environment;
 	}
 }
 
