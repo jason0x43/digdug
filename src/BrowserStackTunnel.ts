@@ -11,32 +11,18 @@ import { on } from './util';
 
 /**
  * A BrowserStack tunnel.
+ *
+ * The accessKey and username properties will be initialized using BROWSERSTACK_ACCESS_KEY and BROWSERSTACK_USERNAME.
  */
 export default class BrowserStackTunnel extends Tunnel {
-	/**
-	 * The BrowserStack access key. This will be initialized with the value of the `BROWSERSTACK_ACCESS_KEY`
-	 * environment variable.
-	 *
-	 * @default the value of the BROWSERSTACK_ACCESS_KEY environment variable
-	 */
-	accessKey: string;
-
 	/**
 	 * Whether or not to start the tunnel with only WebDriver support. Setting this value to `false` is not
 	 * supported.
 	 */
 	automateOnly: boolean;
 
-	directory: string;
-
-	hostname: string;
-
 	/** If true, any other tunnels running on the account will be killed when the tunnel is started. */
 	killOtherTunnels: boolean;
-
-	port: string;
-
-	protocol: string;
 
 	/**
 	 * A list of server URLs that should be proxied by the tunnel. Only the hostname, port, and protocol are used.
@@ -48,17 +34,6 @@ export default class BrowserStackTunnel extends Tunnel {
 
 	/** If true, route all traffic via the local machine. */
 	forceLocal: boolean;
-
-	/**
-	 * The BrowserStack username. This will be initialized with the value of the `BROWSERSTACK_USERNAME`
-	 * environment variable.
-	 *
-	 * @default the value of the BROWSERSTACK_USERNAME environment variable
-	 */
-	username: string;
-
-	/** The URL of a service that provides a list of environments supported by BrowserStack. */
-	environmentUrl: string;
 
 	constructor(options?: BrowserStackOptions) {
 		super(mixin({

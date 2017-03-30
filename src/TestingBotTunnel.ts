@@ -13,26 +13,10 @@ import Task from 'dojo-core/async/Task';
 
 /**
  * A TestingBot tunnel.
+ *
+ * The username and accessKey properties will be initialized using TESTINGBOT_API_KEY and TESTINGBOT_API_SECRET.
  */
 export default class TestingBotTunnel extends Tunnel implements TunnelProperties {
-	/**
-	 * The TestingBot API key.
-	 *
-	 * @default the value of the TESTINGBOT_API_KEY environment variable
-	 */
-	apiKey: string;
-
-	/**
-	 * The TestingBot API secret.
-	 *
-	 * @default the value of the TESTINGBOT_API_SECRET environment variable
-	 */
-	apiSecret: string;
-
-	directory: string;
-
-	executable: string;
-
 	/**
 	 * A list of regular expressions corresponding to domains whose connections should fail immediately if the VM
 	 * attempts to make a connection to them.
@@ -56,14 +40,14 @@ export default class TestingBotTunnel extends Tunnel implements TunnelProperties
 
 	constructor(options?: TestingBotOptions) {
 		super(mixin({
-			apiKey: process.env.TESTINGBOT_KEY,
-			apiSecret: process.env.TESTINGBOT_SECRET,
+			username: process.env.TESTINGBOT_KEY,
+			accessKey: process.env.TESTINGBOT_SECRET,
 			directory: join(__dirname, 'testingbot'),
 			environmentUrl: 'https://api.testingbot.com/v1/browsers',
 			executable: 'java',
 			fastFailDomains: [],
 			logFile: null,
-			port: '4445',
+			port: 4445,
 			url: 'https://testingbot.com/downloads/testingbot-tunnel.zip',
 			useCompression: false,
 			useJettyProxy: true,
@@ -73,7 +57,7 @@ export default class TestingBotTunnel extends Tunnel implements TunnelProperties
 	}
 
 	get auth() {
-		return `${this.apiKey || ''}:${this.apiSecret || ''}`;
+		return `${this.username || ''}:${this.accessKey || ''}`;
 	}
 
 	get isDownloaded() {
@@ -83,8 +67,8 @@ export default class TestingBotTunnel extends Tunnel implements TunnelProperties
 	protected _makeArgs(readyFile: string): string[] {
 		const args = [
 			'-jar', 'testingbot-tunnel/testingbot-tunnel.jar',
-			this.apiKey,
-			this.apiSecret,
+			this.username,
+			this.accessKey,
 			'-P', this.port,
 			'-f', readyFile
 		];
@@ -124,8 +108,8 @@ export default class TestingBotTunnel extends Tunnel implements TunnelProperties
 				'Content-Length': String(Buffer.byteLength(payload, 'utf8')),
 				'Content-Type': 'application/x-www-form-urlencoded'
 			},
-			password: this.apiSecret,
-			user: this.apiKey,
+			password: this.accessKey,
+			user: this.username,
 			proxy: this.proxy
 		}).then(function (response) {
 			if (response.data) {
@@ -235,8 +219,6 @@ export default class TestingBotTunnel extends Tunnel implements TunnelProperties
 }
 
 export interface TestingBotProperties extends TunnelProperties {
-	apiKey: string;
-	apiSecret: string;
 	fastFailDomains: string[];
 	logFile: string;
 	useCompression: boolean;

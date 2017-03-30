@@ -26,7 +26,7 @@ export default class Tunnel extends Evented implements TunnelProperties, Url {
 			hostname: 'localhost',
 			pathname: '/wd/hub/',
 			platform: process.platform,
-			port: '4444',
+			port: 4444,
 			protocol: 'http',
 			verbose: false
 		}, options);
@@ -62,8 +62,17 @@ export default class Tunnel extends Evented implements TunnelProperties, Url {
 	 * @type {string}
 	 */
 
+	/** The URL of a service that provides a list of environments supported by the tunnel. */
 	environmentUrl: string;
+
+	/**
+	 * The tunnel access key. This will be initialized with a tunnel-specific environment variable if not specified.
+	 */
 	accessKey: string;
+
+	/**
+	 * The tunnel username. This will be initialized with a tunnel-specific environment variable if not specified.
+	 */
 	username: string;
 
 	/**
@@ -146,7 +155,6 @@ export default class Tunnel extends Evented implements TunnelProperties, Url {
 	 * Whether or not the tunnel software has already been downloaded.
 	 */
 	get isDownloaded(): boolean {
-		console.log('Tunnel.isDownloaded');
 		return fileExists(join(this.directory, this.executable));
 	}
 

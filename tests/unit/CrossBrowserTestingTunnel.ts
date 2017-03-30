@@ -13,7 +13,7 @@ registerSuite({
 
 	'#auth': function () {
 		tunnel.username = 'foo';
-		tunnel.apiKey = 'bar';
+		tunnel.accessKey = 'bar';
 		assert.equal(tunnel.auth, 'foo:bar');
 	},
 

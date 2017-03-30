@@ -8,9 +8,12 @@ import { mixin } from 'dojo-core/lang';
 export default class NullTunnel extends Tunnel {
 	constructor(options?: TunnelOptions) {
 		super(mixin({
-			auth: '',
-			isDownloaded: true
+			auth: ''
 		}, options));
+	}
+
+	get isDownloaded() {
+		return true;
 	}
 
 	download() {

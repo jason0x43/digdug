@@ -15,25 +15,15 @@ const scVersion = '4.4.5';
 /**
  * A Sauce Labs tunnel. This tunnel uses Sauce Connect 4 on platforms where it is supported, and Sauce Connect 3 on all
  * other platforms.
+ *
+ * The accessKey and username properties will be initialized using SAUCE_ACCESS_KEY and SAUCE_USERNAME.
  */
 export default class SauceLabsTunnel extends Tunnel implements SauceLabsProperties {
-	apiSecret: string;
-	apiKey: string;
-
-	/**
-	 * The Sauce Labs access key.
-	 *
-	 * @default the value of the SAUCE_ACCESS_KEY environment variable
-	 */
-	accessKey: string;
-
 	/** A list of domains that should not be proxied by the tunnel on the remote VM. */
 	directDomains: string[];
 
 	/** A list of domains that will be proxied by the tunnel on the remote VM. */
 	tunnelDomains: string[];
-
-	directory: string;
 
 	/**
 	 * A list of URLs that require additional HTTP authentication. Only the hostname, port, and auth are used.
@@ -90,20 +80,10 @@ export default class SauceLabsTunnel extends Tunnel implements SauceLabsProperti
 	useProxyForTunnel: boolean;
 
 	/**
-	 * The Sauce Labs username.
-	 *
-	 * @default the value of the SAUCE_USERNAME environment variable
-	 */
-	username: string;
-
-	/**
 	 * Overrides the version of the VM created on Sauce Labs. This property is only supported by Sauce Connect 3
 	 * tunnels.
 	 */
 	vmVersion: string;
-
-	/** The URL of a service that provides a list of environments supported by Sauce Labs. */
-	environmentUrl: string;
 
 	scVersion: string;
 
@@ -121,8 +101,7 @@ export default class SauceLabsTunnel extends Tunnel implements SauceLabsProperti
 			skipSslDomains: [],
 			tunnelDomains: [],
 			useProxyForTunnel: false,
-			username: process.env.SAUCE_USERNAME,
-			vmVersion: null
+			username: process.env.SAUCE_USERNAME
 		}, options));
 	}
 
@@ -289,8 +268,8 @@ export default class SauceLabsTunnel extends Tunnel implements SauceLabsProperti
 				'Content-Length': String(Buffer.byteLength(payload, 'utf8')),
 				'Content-Type': 'application/x-www-form-urlencoded'
 			},
-			password: this.apiSecret,
-			user: this.apiKey,
+			password: this.accessKey,
+			user: this.username,
 			proxy: this.proxy
 		}).then(function (response) {
 			if (response.data) {

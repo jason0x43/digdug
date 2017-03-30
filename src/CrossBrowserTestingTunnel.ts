@@ -3,7 +3,7 @@ import { tmpdir } from 'os';
 import { join } from 'path';
 import request from 'dojo-core/request';
 import { NodeRequestOptions } from 'dojo-core/request/node';
-import Tunnel, { TunnelProperties, ChildExecutor, NormalizedEnvironment } from './Tunnel';
+import Tunnel, { ChildExecutor, NormalizedEnvironment, TunnelProperties } from './Tunnel';
 import { JobState } from './interfaces';
 import { on } from './util';
 import Task from 'dojo-core/async/Task';
@@ -39,34 +39,20 @@ const cbtVersion = '0.0.34';
  * 	// Other Intern config options...
  * });
  * ```
+ *
+ * The username and accessKey properties will be initialized using CBT_USERNAME and CBT_APIKEY.
  */
-export default class CrossBrowserTestingTunnel extends Tunnel implements CrossBrowserTestingProperties {
-	/**
-	 * The CrossBrowserTesting API key. This will be initialized with the value of the `CBT_APIKEY` environment
-	 * variable.
-	 *
-	 * @default the value of the CBT_APIKEY environment variable
-	 */
-	apiKey: string;
-
-	/**
-	 * The CrossBrowserTesting username. This will be initialized with the value of the `CBT_USERNAME` environment
-	 * variable.
-	 *
-	 * @default the value of the CBT_USERNAME environment variable
-	 */
-	username: string;
-
+export default class CrossBrowserTestingTunnel extends Tunnel {
 	cbtVersion: string;
 
 	get auth() {
-		return `${this.username || ''}:${this.apiKey || ''}`;
+		return `${this.username || ''}:${this.accessKey || ''}`;
 	}
 
 	get extraCapabilities() {
 		return {
 			username: this.username,
-			password: this.apiKey
+			password: this.accessKey
 		};
 	}
 
@@ -80,9 +66,9 @@ export default class CrossBrowserTestingTunnel extends Tunnel implements CrossBr
 		}
 	}
 
-	constructor(options?: CrossBrowserTestingOptions) {
+	constructor(options?: TunnelProperties) {
 		super(mixin({
-			apiKey: process.env.CBT_APIKEY,
+			accessKey: process.env.CBT_APIKEY,
 			cbtVersion,
 			environmentUrl: 'https://crossbrowsertesting.com/api/v3/selenium/browsers?format=json',
 			executable: 'node',
@@ -112,7 +98,7 @@ export default class CrossBrowserTestingTunnel extends Tunnel implements CrossBr
 	protected _makeArgs(readyFile: string): string[] {
 		return [
 			'node_modules/.bin/cbt_tunnels',
-			'--authkey', this.apiKey,
+			'--authkey', this.accessKey,
 			'--username', this.username,
 			'--ready', readyFile
 		];
@@ -132,7 +118,7 @@ export default class CrossBrowserTestingTunnel extends Tunnel implements CrossBr
 				'Content-Type': 'application/json'
 			},
 			user: this.username,
-			password: this.apiKey,
+			password: this.accessKey,
 			proxy: this.proxy
 		}).then(function (response) {
 			if (response.data) {
@@ -226,9 +212,3 @@ export default class CrossBrowserTestingTunnel extends Tunnel implements CrossBr
 		});
 	}
 }
-
-export interface CrossBrowserTestingProperties extends TunnelProperties {
-	apiKey: string;
-}
-
-export type CrossBrowserTestingOptions = Partial<CrossBrowserTestingProperties>;

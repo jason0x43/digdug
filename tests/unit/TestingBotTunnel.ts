@@ -12,8 +12,8 @@ registerSuite({
 	},
 
 	'#auth': function () {
-		tunnel.apiKey = 'foo';
-		tunnel.apiSecret = 'bar';
+		tunnel.username = 'foo';
+		tunnel.accessKey = 'bar';
 		assert.equal(tunnel.auth, 'foo:bar');
 	}
 });
