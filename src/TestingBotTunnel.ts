@@ -1,15 +1,15 @@
 import Tunnel, { TunnelProperties, ChildExecutor, NormalizedEnvironment, StatusEvent } from './Tunnel';
 import { watchFile, unwatchFile } from 'fs';
-import UrlSearchParams from 'dojo-core/UrlSearchParams';
+import UrlSearchParams from '@dojo/core/UrlSearchParams';
 import { tmpdir } from 'os';
 import { join } from 'path';
-import request from 'dojo-core/request';
-import { NodeRequestOptions } from 'dojo-core/request/node';
+import request from '@dojo/core/request';
+import { NodeRequestOptions } from '@dojo/core/request/providers/node';
 import { parse } from 'url';
 import { fileExists, on } from './util';
-import { mixin } from 'dojo-core/lang';
+import { mixin } from '@dojo/core/lang';
 import { JobState } from './interfaces';
-import Task from 'dojo-core/async/Task';
+import Task from '@dojo/core/async/Task';
 
 /**
  * A TestingBot tunnel.
@@ -102,8 +102,8 @@ export default class TestingBotTunnel extends Tunnel implements TunnelProperties
 
 		const url = `https://api.testingbot.com/v1/tests/${jobId}`;
 		const payload = params.toString();
-		return <Task<any>> request.put<string>(url, <NodeRequestOptions<any>> {
-			data: payload,
+		return <Task<any>> request.put(url, <NodeRequestOptions> {
+			body: payload,
 			headers: {
 				'Content-Length': String(Buffer.byteLength(payload, 'utf8')),
 				'Content-Type': 'application/x-www-form-urlencoded'
@@ -112,22 +112,24 @@ export default class TestingBotTunnel extends Tunnel implements TunnelProperties
 			user: this.username,
 			proxy: this.proxy
 		}).then(function (response) {
-			if (response.data) {
-				const data = JSON.parse(response.data);
+			return response.text().then(text => {
+				if (text) {
+					const data = JSON.parse(text);
 
-				if (data.error) {
-					throw new Error(data.error);
+					if (data.error) {
+						throw new Error(data.error);
+					}
+					else if (!data.success) {
+						throw new Error('Job data failed to save.');
+					}
+					else if (response.status!== 200) {
+						throw new Error(`Server reported ${response.status} with: ${text}`);
+					}
 				}
-				else if (!data.success) {
-					throw new Error('Job data failed to save.');
+				else {
+					throw new Error(`Server reported ${response.status} with no other data.`);
 				}
-				else if (response.statusCode !== 200) {
-					throw new Error(`Server reported ${response.statusCode} with: ${response.data}`);
-				}
-			}
-			else {
-				throw new Error(`Server reported ${response.statusCode} with no other data.`);
-			}
+			});
 		});
 	}
 

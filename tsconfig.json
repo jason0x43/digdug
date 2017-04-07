@@ -3,7 +3,13 @@
     "allowSyntheticDefaultImports": true,
     "declaration": true,
     "experimentalDecorators": true,
-	"lib": [ "ES5", "ES2015.Promise", "ES2015.Symbol", "ES2015.Iterable" ],
+	"lib": [
+      "es5",
+      "es2015.symbol",
+      "es2015.symbol.wellknown",
+      "es2015.iterable",
+      "dom"
+    ],
     "module": "commonjs",
     "moduleResolution": "node",
     "noImplicitAny": true,
@@ -16,7 +22,7 @@
     "rootDir": ".",
     "sourceMap": true,
 	"inlineSources": true,
-    "target": "ES5"
+    "target": "es5"
   },
   "formatCodeOptions": {
     "convertTabsToSpaces": false,

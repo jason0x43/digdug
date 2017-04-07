@@ -1,11 +1,11 @@
 import { chmodSync } from 'fs';
 import { join } from 'path';
-import Task from 'dojo-core/async/Task';
-import request, { Response } from 'dojo-core/request';
-import { NodeRequestOptions } from 'dojo-core/request/node';
+import Task from '@dojo/core/async/Task';
+import request from '@dojo/core/request';
+import { NodeRequestOptions } from '@dojo/core/request/providers/node';
 import Tunnel, { TunnelProperties, DownloadOptions, ChildExecutor, NormalizedEnvironment, StatusEvent } from './Tunnel';
 import { parse as parseUrl, Url } from 'url';
-import { mixin } from 'dojo-core/lang';
+import { mixin } from '@dojo/core/lang';
 import { JobState } from './interfaces';
 import { on } from './util';
 
@@ -93,8 +93,8 @@ export default class BrowserStackTunnel extends Tunnel {
 		return url;
 	}
 
-	protected _postDownloadFile(response: Response<any>, options?: DownloadOptions): Promise<void> {
-		return super._postDownloadFile(response, options).then(() => {
+	protected _postDownloadFile(data: string, options?: DownloadOptions): Promise<void> {
+		return super._postDownloadFile(data, options).then(() => {
 			const executable = this.executable;
 			chmodSync(executable, parseInt('0755', 8));
 		});
@@ -141,8 +141,8 @@ export default class BrowserStackTunnel extends Tunnel {
 		});
 
 		const url = `https://www.browserstack.com/automate/sessions/${jobId}.json`;
-		return <Task<any>> request.put<string>(url, <NodeRequestOptions<any>> {
-			data: payload,
+		return request.put(url, <NodeRequestOptions> {
+			body: payload,
 			headers: {
 				'Content-Length': String(Buffer.byteLength(payload, 'utf8')),
 				'Content-Type': 'application/json'
@@ -151,11 +151,10 @@ export default class BrowserStackTunnel extends Tunnel {
 			user: this.username,
 			proxy: this.proxy
 		}).then(response => {
-			if (response.statusCode >= 200 && response.statusCode < 300) {
-				return true;
-			}
-			else {
-				throw new Error(response.data || `Server reported ${response.statusCode} with no other data.`);
+			if (response.status < 200 || response.status >= 300) {
+				return response.text().then(text => {
+					throw new Error(text || `Server reported ${response.status} with no other data.`);
+				});
 			}
 		});
 	}

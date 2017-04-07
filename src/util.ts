@@ -1,8 +1,7 @@
-import { createHandle } from 'dojo-core/lang';
-import { Handle } from 'dojo-core/interfaces';
+import { createHandle } from '@dojo/core/lang';
+import { Handle } from '@dojo/interfaces/core';
 import { mkdirSync, statSync, writeFile as fsWriteFile } from 'fs';
 import { dirname } from 'path';
-import { RequestError } from 'dojo-core/request';
 
 /**
  * Attaches an event to a Node.js EventEmitter and returns a handle for removing the listener later.
@@ -76,8 +75,4 @@ export function writeFile(data: any, filename: string) {
 			}
 		});
 	});
-}
-
-export function isRequestError(error: any): error is RequestError<any> {
-	return error instanceof Error && Boolean((<any> error).response);
 }

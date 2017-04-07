@@ -1,11 +1,10 @@
 import Tunnel, { TunnelProperties, DownloadOptions, ChildExecutor } from './Tunnel';
 import { format } from 'util';
 import { extname, join } from 'path';
-import Task from 'dojo-core/async/Task';
-import { Response } from 'dojo-core/request';
+import Task from '@dojo/core/async/Task';
 import { fileExists, on, writeFile } from './util';
-import { Handle } from 'dojo-core/interfaces';
-import { mixin } from 'dojo-core/lang';
+import { Handle } from '@dojo/interfaces/core';
+import { mixin } from '@dojo/core/lang';
 
 const SeleniumVersion = '3.3.1';
 const ChromeVersion = '2.28';
@@ -203,11 +202,11 @@ export default class SeleniumTunnel extends Tunnel implements SeleniumProperties
 		return args;
 	}
 
-	protected _postDownloadFile(response: Response<any>, options: SeleniumDownloadOptions) {
+	protected _postDownloadFile(data: string, options: SeleniumDownloadOptions) {
 		if (extname(options.executable) === '.jar') {
-			return writeFile(response.data, join(this.directory, options.executable));
+			return writeFile(data, join(this.directory, options.executable));
 		}
-		return super._postDownloadFile(response, options);
+		return super._postDownloadFile(data, options);
 	}
 
 	protected _start(executor: ChildExecutor) {
@@ -296,7 +295,7 @@ type ChromeOptions = Partial<ChromeProperties>;
 class ChromeConfig extends Config<ChromeOptions> implements ChromeProperties, DriverFile {
 	arch = process.arch;
 	baseUrl = 'https://chromedriver.storage.googleapis.com';
-	platform = process.platform;
+	platform: string = process.platform;
 	version = ChromeVersion;
 
 	get artifact() {
@@ -339,7 +338,7 @@ type FirefoxOptions = Partial<FirefoxProperties>;
 class FirefoxConfig extends Config<FirefoxOptions> implements FirefoxProperties, DriverFile {
 	arch = process.arch;
 	baseUrl = 'https://github.com/mozilla/geckodriver/releases/download';
-	platform = process.platform;
+	platform: string = process.platform;
 	version = FirefoxVersion;
 
 	get artifact() {

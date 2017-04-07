@@ -1,13 +1,12 @@
-import Evented from 'dojo-core/Evented';
-import { EventObject, EventTargettedObject } from 'dojo-interfaces/core';
-import { createCompositeHandle, mixin } from 'dojo-core/lang';
-import { Handle } from 'dojo-core/interfaces';
-import Task, { State } from 'dojo-core/async/Task';
-import sendRequest, { ResponsePromise, Response } from 'dojo-core/request';
-import { NodeRequestOptions } from 'dojo-core/request/node';
+import Evented, { BaseEventedEvents } from '@dojo/core/Evented';
+import { EventObject, EventTargettedObject, Handle } from '@dojo/interfaces/core';
+import { createCompositeHandle, mixin } from '@dojo/core/lang';
+import Task, { State } from '@dojo/core/async/Task';
+import sendRequest, { Response } from '@dojo/core/request';
+import { NodeRequestOptions } from '@dojo/core/request/providers/node';
 import { spawn, ChildProcess } from 'child_process';
 import { format as formatUrl, Url } from 'url';
-import { fileExists, isRequestError, on } from './util';
+import { fileExists, on } from './util';
 import { JobState } from './interfaces';
 import decompress = require('decompress');
 
@@ -60,6 +59,8 @@ export default class Tunnel extends Evented implements TunnelProperties, Url {
 	 * @event module:digdug/Tunnel#status
 	 * @type {string}
 	 */
+
+	on: Events;
 
 	/** The URL of a service that provides a list of environments supported by the tunnel. */
 	environmentUrl: string;
@@ -178,13 +179,6 @@ export default class Tunnel extends Evented implements TunnelProperties, Url {
 		return this._state === 'stopping';
 	}
 
-	on(type: 'stderr' | 'stdout', listener: (event: IOEvent) => void): Handle;
-	on(type: 'status', listener: (event: StatusEvent) => void): Handle;
-	on(type: string, listener: (event: EventObject) => void): Handle;
-	on(type: string, listener: (event: EventObject) => void): Handle {
-		return super.on(type, listener);
-	}
-
 	/**
 	 * Downloads and extracts the tunnel software if it is not already downloaded.
 	 *
@@ -202,7 +196,7 @@ export default class Tunnel extends Evented implements TunnelProperties, Url {
 	}
 
 	protected _downloadFile(url: string, proxy: string, options?: DownloadOptions): Task<any> {
-		let request: ResponsePromise<any>;
+		let request: Task<Response>;
 
 		if (!url) {
 			return Task.reject(new Error('URL is empty'));
@@ -215,17 +209,19 @@ export default class Tunnel extends Evented implements TunnelProperties, Url {
 				// 	self.emit('downloadprogress', util.mixin({}, info, { url: url }));
 				// 	progress(info);
 				// }
-				request = sendRequest(url, <NodeRequestOptions<any>>{ proxy });
-				request
-					.then(response => {
-						resolve(this._postDownloadFile(response, options));
-					})
-					.catch(error => {
-						if (isRequestError(error) && error.response.statusCode >= 400) {
-							error = new Error(`Download server returned status code ${error.response.statusCode}`);
-						}
-						reject(error);
-					});
+				request = sendRequest(url, <NodeRequestOptions>{ proxy });
+				request.then(response => {
+					if (response.status >= 400) {
+						throw new Error(`Download server returned status code ${response.status}`);
+					}
+					else {
+						response.text().then(text => {
+							resolve(this._postDownloadFile(text, options));
+						});
+					}
+				}).catch(error => {
+					reject(error);
+				});
 			},
 			() => {
 				request && request.cancel();
@@ -236,13 +232,12 @@ export default class Tunnel extends Evented implements TunnelProperties, Url {
 	/**
 	 * Called with the response after a file download has completed
 	 */
-	protected _postDownloadFile(response: Response<any>, options?: DownloadOptions): Promise<void>;
-	protected _postDownloadFile(response: Response<any>): Promise<void> {
+	protected _postDownloadFile(data: string, options?: DownloadOptions): Promise<void>;
+	protected _postDownloadFile(data: string): Promise<void> {
 		return new Promise<void>((resolve, reject) => {
-			decompress(response.data, this.directory)
+			decompress(data, this.directory)
 				.then(() => resolve())
-				.catch(reject)
-				;
+				.catch(reject);
 		});
 	}
 
@@ -513,20 +508,20 @@ export default class Tunnel extends Evented implements TunnelProperties, Url {
 			return Task.resolve([]);
 		}
 
-		return <Task<any>>sendRequest(this.environmentUrl, <NodeRequestOptions<any>>{
+		return <Task<any>>sendRequest(this.environmentUrl, <NodeRequestOptions>{
 			password: this.accessKey,
 			user: this.username,
 			proxy: this.proxy
 		}).then(response => {
-			if (response.statusCode >= 200 && response.statusCode < 400) {
-				return JSON.parse(response.data.toString())
-					.reduce((environments: NormalizedEnvironment[], environment: any) => {
+			if (response.status >= 200 && response.status < 400) {
+				return response.json<any[]>().then(data => {
+					return data.reduce((environments: NormalizedEnvironment[], environment: any) => {
 						return environments.concat(this._normalizeEnvironment(environment));
-					}, [])
-					;
+					}, []);
+				});
 			}
 			else {
-				throw new Error(`Server replied with a status of ${response.statusCode}`);
+				throw new Error(`Server replied with a status of ${response.status}`);
 			}
 		});
 	}
@@ -593,6 +588,12 @@ export interface TunnelProperties extends DownloadOptions {
 }
 
 export type TunnelOptions = Partial<TunnelProperties>;
+
+export interface Events extends BaseEventedEvents {
+	(type: 'stderr' | 'stdout', listener: (event: IOEvent) => void): Handle;
+	(type: 'status', listener: (event: StatusEvent) => void): Handle;
+	(type: string, listener: (event: EventObject) => void): Handle;
+}
 
 function proxyIOEvent(target: Tunnel, type: 'stdout' | 'stderr') {
 	return function (data: any) {

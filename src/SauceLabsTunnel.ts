@@ -3,11 +3,11 @@ import { JobState } from './interfaces';
 import { chmodSync, watchFile, unwatchFile } from 'fs';
 import { tmpdir } from 'os';
 import { join } from 'path';
-import Task, { State } from 'dojo-core/async/Task';
-import request, { Response } from 'dojo-core/request';
-import { NodeRequestOptions } from 'dojo-core/request/node';
+import Task, { State } from '@dojo/core/async/Task';
+import request from '@dojo/core/request';
+import { NodeRequestOptions } from '@dojo/core/request/providers/node';
 import { format as formatUrl, parse as parseUrl, Url } from 'url';
-import { mixin } from 'dojo-core/lang';
+import { mixin } from '@dojo/core/lang';
 import { fileExists, on } from './util';
 
 const scVersion = '4.4.5';
@@ -157,8 +157,8 @@ export default class SauceLabsTunnel extends Tunnel implements SauceLabsProperti
 		return url;
 	}
 
-	protected _postDownloadFile(response: Response<any>, options?: DownloadOptions): Promise<void> {
-		return super._postDownloadFile(response, options).then(() => {
+	protected _postDownloadFile(data: string, options?: DownloadOptions): Promise<void> {
+		return super._postDownloadFile(data, options).then(() => {
 			if (this.executable !== 'java') {
 				chmodSync(this.executable, parseInt('0755', 8));
 			}
@@ -262,8 +262,8 @@ export default class SauceLabsTunnel extends Tunnel implements SauceLabsProperti
 			tags: data.tags
 		});
 
-		return <Task<any>> request.put<string>(formatUrl(url), <NodeRequestOptions<any>> {
-			data: payload,
+		return <Task<any>>request.put(formatUrl(url), <NodeRequestOptions>{
+			body: payload,
 			headers: {
 				'Content-Length': String(Buffer.byteLength(payload, 'utf8')),
 				'Content-Type': 'application/x-www-form-urlencoded'
@@ -272,20 +272,22 @@ export default class SauceLabsTunnel extends Tunnel implements SauceLabsProperti
 			user: this.username,
 			proxy: this.proxy
 		}).then(function (response) {
-			if (response.data) {
-				const data = JSON.parse(response.data);
+			return response.text().then(text => {
+				if (text) {
+					const data = JSON.parse(text);
 
-				if (data.error) {
-					throw new Error(data.error);
-				}
+					if (data.error) {
+						throw new Error(data.error);
+					}
 
-				if (response.statusCode !== 200) {
-					throw new Error(`Server reported ${response.statusCode} with: ${response.data}`);
+					if (response.status !== 200) {
+						throw new Error(`Server reported ${response.status} with: ${text}`);
+					}
 				}
-			}
-			else {
-				throw new Error(`Server reported ${response.statusCode} with no other data.`);
-			}
+				else {
+					throw new Error(`Server reported ${response.status} with no other data.`);
+				}
+			});
 		});
 	}
 
@@ -335,7 +337,7 @@ export default class SauceLabsTunnel extends Tunnel implements SauceLabsProperti
 				readStatus(message);
 			};
 
-			readRunningMessage = function(message: string) {
+			readRunningMessage = function (message: string) {
 				// Sauce Connect 3
 				if (message.indexOf('Problem connecting to Sauce Labs REST API') > -1) {
 					// It will just keep trying and trying and trying for a while, but it is a failure, so force it

@@ -8,22 +8,20 @@
   },
   "license": "BSD-3-Clause",
   "dependencies": {
-    "decompress": "4.0.0",
-    "dojo-core": "2.0.0-alpha.19",
-    "dojo-has": "2.0.0-alpha.6",
-    "dojo-interfaces": "2.0.0-alpha.9",
-    "dojo-shim": "2.0.0-beta.7",
-    "dojo-streams": "2.0.0-alpha.1"
+    "decompress": "~4.0.0",
+    "@dojo/core": "beta1",
+    "@dojo/has": "beta1",
+    "@dojo/interfaces": "beta1",
+    "@dojo/shim": "beta1"
   },
   "devDependencies": {
-    "@types/node": "6.0.48",
-    "@types/shelljs": "0.3.33",
-    "dojo-loader": "2.0.0-beta.7",
+    "@types/node": "~6.0.48",
+    "@types/shelljs": "~0.3.33",
+    "@dojo/loader": "beta1",
     "intern": "~3.4.2",
-    "intern-dev": "https://github.com/theintern/intern-dev/releases/download/0.1.9/intern-dev-0.1.9.tgz",
-    "shelljs": "0.7.5",
-    "tslint": "~4.0.0",
-    "typescript": "~2.1.4"
+    "intern-dev": "../intern-dev/_build/src",
+    "shelljs": "~0.7.7",
+    "typescript": "~2.2.0"
   },
   "scripts": {
     "build": "intern-dev-clean && intern-dev-build",
@@ -48,12 +46,5 @@
   "homepage": "https://github.com/theintern/digdug",
   "bin": {
     "digdugEnvironments": "./bin/digdugEnvironments.js"
-  },
-  "internDev": {
-    "resources": {
-      ".": [
-        "src/*.d.ts"
-      ]
-    }
   }
 }

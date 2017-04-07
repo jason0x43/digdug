@@ -1,13 +1,13 @@
 import { watchFile, unwatchFile } from 'fs';
 import { tmpdir } from 'os';
 import { join } from 'path';
-import request from 'dojo-core/request';
-import { NodeRequestOptions } from 'dojo-core/request/node';
+import request from '@dojo/core/request';
+import { NodeRequestOptions } from '@dojo/core/request/providers/node';
 import Tunnel, { ChildExecutor, NormalizedEnvironment, TunnelProperties } from './Tunnel';
 import { JobState } from './interfaces';
 import { on } from './util';
-import Task from 'dojo-core/async/Task';
-import { createCompositeHandle, mixin } from 'dojo-core/lang';
+import Task from '@dojo/core/async/Task';
+import { createCompositeHandle, mixin } from '@dojo/core/lang';
 import { exec } from 'child_process';
 
 const cbtVersion = '0.0.34';
@@ -111,8 +111,8 @@ export default class CrossBrowserTestingTunnel extends Tunnel {
 		});
 
 		const url = `https://crossbrowsertesting.com/api/v3/selenium/${jobId}`;
-		return <Task<any>> request.put<string>(url, <NodeRequestOptions<any>> {
-			data: payload,
+		return <Task<any>> request.put(url, <NodeRequestOptions> {
+			body: payload,
 			headers: {
 				'Content-Length': String(Buffer.byteLength(payload, 'utf8')),
 				'Content-Type': 'application/json'
@@ -121,19 +121,21 @@ export default class CrossBrowserTestingTunnel extends Tunnel {
 			password: this.accessKey,
 			proxy: this.proxy
 		}).then(function (response) {
-			if (response.data) {
-				const data = JSON.parse(response.data);
+			if (response.status !== 200) {
+				return response.text().then(text => {
+					if (text) {
+						const data = JSON.parse(text);
 
-				if (data.status) {
-					throw new Error(`Could not save test status (${data.message})`);
-				}
+						if (data.status) {
+							throw new Error(`Could not save test status (${data.message})`);
+						}
 
-				if (response.statusCode !== 200) {
-					throw new Error(`Server reported ${response.statusCode} with: ${response.data}`);
-				}
-			}
-			else {
-				throw new Error(`Server reported ${response.statusCode} with no other data.`);
+						throw new Error(`Server reported ${response.status} with: ${text}`);
+					}
+					else {
+						throw new Error(`Server reported ${response.status} with no other data.`);
+					}
+				});
 			}
 		});
 	}

@@ -1,6 +1,6 @@
-import Task from 'dojo-core/async/Task';
+import Task from '@dojo/core/async/Task';
 import Tunnel, { TunnelOptions } from './Tunnel';
-import { mixin } from 'dojo-core/lang';
+import { mixin } from '@dojo/core/lang';
 
 /**
  * A no-op tunnel.

@@ -2,7 +2,7 @@ import Tunnel from 'src/Tunnel';
 import * as registerSuite from 'intern!object';
 import * as assert from 'intern/chai!assert';
 import Test = require('intern/lib/Test');
-import Task from 'dojo-core/async/Task';
+import Task from '@dojo/core/async/Task';
 
 let tunnel: Tunnel;
 
